@@ -45,27 +45,25 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: github.ref == 'refs/heads/main'
         with:
-          tag_name: v1.0.0
-          name: "Bruno Run v1.0.0 - Jogo Espacial 3D"
+          tag_name: v1.1.0
+          name: "Bruno Run v1.1.0 - Superfície Planetária, 3 Sóis & Dificuldade Equilibrada"
           body: |
-            ## 🚀 Bruno Run - Voo Espacial 3D
+            ## 🚀 Bruno Run v1.1.0 - Grande Atualização!
 
-            Baixe o jogo diretamente para o seu celular Android clicando no link abaixo:
+            👉 **[Download Direto do Bruno-Run.apk (v1.1.0)](https://github.com/${{ github.repository }}/releases/download/v1.1.0/Bruno-Run.apk)**
 
-            👉 **[Download Direto do Bruno-Run.apk](https://github.com/${{ github.repository }}/releases/download/v1.0.0/Bruno-Run.apk)**
+            <p align="center">
+              <img src="https://raw.githubusercontent.com/${{ github.repository }}/main/qrcode-download.png" width="220" alt="QR Code Bruno Run" />
+            </p>
 
             ---
 
-            ### 🛸 Naves Desbloqueáveis por Pontuação:
-            1. 🏎️ **Podracer Vermelho do Anakin Skywalker**: Nave inicial (0 a 999 pontos) com turbinas duplas e arco elétrico de energia.
-            2. 🛡️ **Razor Crest do Mandaloriano**: Desbloqueada aos 1.000 pontos. Canhoneira pesada em aço Beskar.
-            3. 🚀 **N-1 Starfighter Modificada do Mandaloriano**: Desbloqueada aos 2.500 pontos. Cúpula com o Grogu e propulsores iônicos hiper-rápidos!
-
-            ### 🎮 Mecânicas e Controles:
-            - **Desvie dos Obstáculos**: Cristais flutuantes e grandes pirâmides de cristal em 3D.
-            - **Setores Seguros**: Corredores vazios sinalizados para acionar o turbo com segurança.
-            - **Jato de Plasma (Turbo Boost)**: Aumente a velocidade por alguns segundos e multiplique a pontuação por 3x!
-            - **Dificuldade Progressiva**: A velocidade aumenta gradualmente conforme você viaja pelo espaço.
+            ### 🪐 Novidades desta Versão:
+            - **Superfície Planetária**: O jogo agora se passa na superfície de um cânion desértico alienígena com solo e sombra dinâmica da nave.
+            - **Transição Dia / Noite com 3 Sóis**: Três sóis (um central grandioso e dois pequenos companheiros orbitando) cruzam o céu em um ciclo fade suave (Manhã ➡️ Dia Pleno ➡️ Pôr do Sol ➡️ Noite com estrelas ➡️ Madrugada).
+            - **Obstáculos Estáticos & Menor Densidade**: As pirâmides e cristais agora ficam fixos no solo, sem girar nem flutuar descontroladamente, facilitando desviar com precisão.
+            - **Dificuldade Gradativa & Reset de Velocidade**: O jogo começa calmo e acelera progressivamente. Ao desbloquear uma nova nave, a velocidade reduz de volta ao cruzeiro inicial para você se adaptar e acelerar novamente!
+            - **Planícies Seguras**: Setores limpos sem obstáculos para usar o Turbo de Plasma com segurança total.
           files: release-output/Bruno-Run.apk
           draft: false
           prerelease: false

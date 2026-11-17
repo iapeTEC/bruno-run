@@ -13,13 +13,25 @@
 
 ## 📲 Download do APK
 
-👉 **[Clique aqui para baixar o APK direto (Releases)](https://github.com/iapeTEC/bruno-run/releases/download/v1.0.0/Bruno-Run.apk)**
+👉 **[Clique aqui para baixar o APK direto (Última Versão)](https://github.com/iapeTEC/bruno-run/releases/latest/download/Bruno-Run.apk)**
 
 <p align="center">
   <img src="qrcode-download.png" width="240" alt="QR Code - Download Bruno-Run.apk" style="border: 4px solid #00e5ff; border-radius: 16px; padding: 8px; background: white;" />
   <br>
   <i>Aponte a câmera do celular para baixar o APK direto!</i>
 </p>
+
+---
+
+## 🪐 Novidades da Versão v1.1.0
+
+- 🏜️ **Superfície Planetária**: Voe rasante sobre o cânion desértico alienígena com solo firme e sombra dinâmica sob a nave.
+- ☀️ **Transição Dia / Noite com 3 Sóis**: Três sóis (um sol gigante central e dois pequenos companheiros ao redor) cruzam o horizonte criando um fade suave: **Manhã ➡️ Dia Pleno ➡️ Pôr do Sol Carmesim ➡️ Noite Estrelada ➡️ Madrugada**.
+- 💎 **Obstáculos Estáticos no Solo**: As pirâmides e obeliscos de cristal estão fixos e ancorados no terreno, sem movimentos confusos e com espaçamento agradável para desviar.
+- 📈 **Dificuldade Gradativa & Reset de Velocidade**:
+  - A velocidade inicia calma e acelera gradualmente.
+  - Ao atingir a pontuação e **desbloquear uma nova nave** (1.000 pts e 2.500 pts), **a velocidade reduz de volta ao cruzeiro**, permitindo respirar e dominar a nova nave antes de acelerar novamente!
+- ⚡ **Planícies Livres (Áreas Seguras)**: Trechos abertos sem qualquer obstáculo para acionar o **Turbo de Plasma** com segurança.
 
 > Caso você prefira baixar pelos artefatos da compilação do GitHub Actions, acesse a aba **Actions** no repositório.
 
