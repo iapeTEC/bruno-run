@@ -281,9 +281,9 @@ class Game {
             const banner = document.getElementById('safe-zone-banner');
             banner.classList.add('visible');
             if (mode === 'boss_space') {
-                banner.innerHTML = "⚡ VÁCUO CÓSMICO LIVRE • SEM METEORITOS ⚡<br><small>ACIE O TURBO DE PLASMA NO ESPAÇO PROFUNDO!</small>";
+                banner.innerHTML = "⚡ <strong>VÁCUO CÓSMICO LIVRE</strong><br><span style='color:#80deea;'>Sem meteoritos • Turbo seguro!</span>";
             } else {
-                banner.innerHTML = "⚡ PLANÍCIE LIVRE • ÁREA SEGURA ⚡<br><small>SEM OBSTÁCULOS: ACIONE O TURBO DE PLASMA!</small>";
+                banner.innerHTML = "⚡ <strong>PLANÍCIE LIVRE</strong><br><span style='color:#80deea;'>Sem obstáculos • Turbo seguro!</span>";
             }
         };
 
@@ -691,10 +691,10 @@ class Game {
             if (targetStage === 4) {
                 // Enter Boss Phase!
                 this.enterBossPhase();
-                banner.innerHTML = `⚠️ FASE CHEFÃO ATIVADA! ⚠️<br><strong style="color:#ff0055">ESPAÇO PROFUNDO & CAMPO DE METEORITOS!</strong><br><small style="font-size:12px; color:#ffffff;">Velocidade reiniciada: Desvie dos asteroides!</small>`;
+                banner.innerHTML = `⚠️ <strong style="color:#ff1744;">FASE CHEFÃO!</strong><br><span style="color:#fff;">Espaço & Meteoritos!</span>`;
             } else {
-                const name = targetStage === 2 ? "RAZOR CREST (MANDALORIANO)" : "N-1 STARFIGHTER (MANDO & GROGU)";
-                banner.innerHTML = `🚀 NOVA NAVE DESBLOQUEADA!<br><strong style="color:#00ffff">${name}</strong><br><small style="font-size:12px; color:#ffffff;">Velocidade reiniciada: Acelere com a nova nave!</small>`;
+                const name = targetStage === 2 ? "Razor Crest" : "N-1 Starfighter";
+                banner.innerHTML = `🚀 <strong style="color:#ffb300;">NOVA NAVE!</strong><br><span style="color:#00e5ff;">${name}</span>`;
             }
 
             banner.classList.add('visible');
