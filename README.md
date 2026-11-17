@@ -37,21 +37,26 @@
 
 ---
 
-## 🛸 Naves Desbloqueáveis por Pontuação
+## 🪐 Fases do Jogo (Incluindo a Nova FASE CHEFÃO)
 
-Conforme você voa mais longe e acumula pontos, novas naves lendárias são liberadas:
+1. **🏎️ Fase 1: Podracer Vermelho do Anakin Skywalker (0 a 999 pontos)**
+   - Voo rasante sobre a superfície desértica do planeta com solo firme e sombra dinâmica.
+   - Três sóis (um sol gigante e dois companheiros) nascendo no horizonte em fade matinal suave.
+   - Obstáculos: Pirâmides e obeliscos de cristal estáticos.
 
-1. **🏎️ Podracer Vermelho do Anakin Skywalker (0 a 999 pontos)**
-   - Moto de corrida estelar icônica com turbinas duplas frontais vermelhas e listras amarelas.
-   - Arco de energia de plasma roxo unindo as turbinas e cabos de controle até a cabine traseira.
+2. **🛡️ Fase 2: Razor Crest do Mandaloriano (1.000 a 2.499 pontos)**
+   - Ao desbloquear a Razor Crest, a **velocidade reinicia** de volta ao cruzeiro para você se adaptar.
+   - O planeta entra em pôr do sol carmesim com os 3 sóis se pondo no horizonte.
 
-2. **🛡️ Razor Crest do Mandaloriano (1.000 a 2.499 pontos)**
-   - Canhoneira blindada pesada em aço Beskar.
-   - Motores cilíndricos duplos nas asas com rastro de combustão amarelo/laranja e canhões blaster frontais.
+3. **🚀 Fase 3: N-1 Starfighter Modificada com Grogu (2.500 a 4.499 pontos)**
+   - Velocidade reinicia de volta ao cruzeiro inicial com a nova nave veloz.
+   - O planeta entra na noite estrelada.
 
-3. **🚀 N-1 Starfighter Modificada do Mandaloriano (2.500+ pontos)**
-   - A nave mais recente do Mandaloriano: cromada e prateada com detalhes em amarelo.
-   - Estabilizador pontiagudo afiado, motores de íons velozes ciano e a cúpula com o pequeno **Grogu** logo atrás da cabine!
+4. **☄️ Fase 4: FASE CHEFÃO - ESPAÇO PROFUNDO & METEORITOS (4.500+ pontos)**
+   - **Decolagem atmosférica**: O solo e os cânions desaparecem, entrando no vácuo do **Espaço Profundo** com estrelas cósmicas à distância!
+   - Os obstáculos tornam-se **METEORITOS e ASTEROIDES 3D gigantescos e rochosos** flutuando no vácuo espacial.
+   - A velocidade é reiniciada no início da Fase Chefão para fôlego inicial, acelerando gradativamente no desafio supremo de sobrevivência!
+   - Há um botão na tela inicial para testar a **Fase Chefão** diretamente a qualquer momento!
 
 ---
 

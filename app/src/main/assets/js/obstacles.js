@@ -1,61 +1,46 @@
-// Ground-based static obstacle generator for Bruno Run
-// Spawns static crystal pyramids, obelisks and rock formations rooted on the planetary surface
+// Obstacle Generator for Bruno Run
+// Supports both Planetary Surface (Crystals & Pyramids) and Boss Phase (Deep Space Meteorites)
 
 class ObstacleManager {
     constructor(scene) {
         this.scene = scene;
         this.obstacles = [];
+        this.mode = 'planet'; // 'planet' or 'boss_space'
         this.lastSpawnZ = -60;
         this.spawnDistance = 380;
         this.nextSafeZoneDistance = 500;
         this.inSafeZone = false;
         this.safeZoneEndDistance = 0;
 
-        // Static crystal materials with emissive highlights
+        // Planetary Crystal Materials
         this.crystalMaterials = [
-            new THREE.MeshStandardMaterial({
-                color: 0x00e5ff,
-                emissive: 0x005577,
-                roughness: 0.2,
-                metalness: 0.8,
-                flatShading: true
-            }),
-            new THREE.MeshStandardMaterial({
-                color: 0xff007f,
-                emissive: 0x660033,
-                roughness: 0.2,
-                metalness: 0.8,
-                flatShading: true
-            }),
-            new THREE.MeshStandardMaterial({
-                color: 0x00ffaa,
-                emissive: 0x005533,
-                roughness: 0.2,
-                metalness: 0.8,
-                flatShading: true
-            }),
-            new THREE.MeshStandardMaterial({
-                color: 0xffaa00,
-                emissive: 0x664400,
-                roughness: 0.2,
-                metalness: 0.8,
-                flatShading: true
-            }),
-            new THREE.MeshStandardMaterial({
-                color: 0x9c27b0,
-                emissive: 0x4a148c,
-                roughness: 0.2,
-                metalness: 0.8,
-                flatShading: true
-            })
+            new THREE.MeshStandardMaterial({ color: 0x00e5ff, emissive: 0x005577, roughness: 0.2, metalness: 0.8, flatShading: true }),
+            new THREE.MeshStandardMaterial({ color: 0xff007f, emissive: 0x660033, roughness: 0.2, metalness: 0.8, flatShading: true }),
+            new THREE.MeshStandardMaterial({ color: 0x00ffaa, emissive: 0x005533, roughness: 0.2, metalness: 0.8, flatShading: true }),
+            new THREE.MeshStandardMaterial({ color: 0xffaa00, emissive: 0x664400, roughness: 0.2, metalness: 0.8, flatShading: true }),
+            new THREE.MeshStandardMaterial({ color: 0x9c27b0, emissive: 0x4a148c, roughness: 0.2, metalness: 0.8, flatShading: true })
         ];
 
-        // Dark obsidian stone base for crystal roots
-        this.stoneBaseMat = new THREE.MeshStandardMaterial({
-            color: 0x263238,
-            roughness: 0.9,
-            metalness: 0.1
-        });
+        this.stoneBaseMat = new THREE.MeshStandardMaterial({ color: 0x263238, roughness: 0.9, metalness: 0.1 });
+
+        // Deep Space Meteorite Materials
+        this.meteoriteMaterials = [
+            new THREE.MeshStandardMaterial({ color: 0x4e342e, roughness: 0.9, metalness: 0.2, flatShading: true }),
+            new THREE.MeshStandardMaterial({ color: 0x37474f, roughness: 0.85, metalness: 0.35, flatShading: true }),
+            new THREE.MeshStandardMaterial({ color: 0x212121, roughness: 0.95, metalness: 0.15, flatShading: true }),
+            new THREE.MeshStandardMaterial({ color: 0x5d4037, roughness: 0.88, metalness: 0.25, flatShading: true })
+        ];
+    }
+
+    setMode(mode) {
+        if (this.mode !== mode) {
+            this.mode = mode;
+            // Clear current obstacles for clean transition
+            for (let obs of this.obstacles) {
+                this.scene.remove(obs.mesh);
+            }
+            this.obstacles = [];
+        }
     }
 
     reset() {
@@ -63,6 +48,7 @@ class ObstacleManager {
             this.scene.remove(obs.mesh);
         }
         this.obstacles = [];
+        this.mode = 'planet';
         this.lastSpawnZ = -60;
         this.nextSafeZoneDistance = 500;
         this.inSafeZone = false;
@@ -73,11 +59,11 @@ class ObstacleManager {
         // Safe Zone Check
         if (!this.inSafeZone && currentDistance >= this.nextSafeZoneDistance) {
             this.inSafeZone = true;
-            this.safeZoneEndDistance = currentDistance + 400; // 400 units of completely empty flat runway
-            this.nextSafeZoneDistance = this.safeZoneEndDistance + (550 + Math.random() * 200);
+            this.safeZoneEndDistance = currentDistance + (this.mode === 'boss_space' ? 450 : 380);
+            this.nextSafeZoneDistance = this.safeZoneEndDistance + (500 + Math.random() * 200);
 
             if (window.onSafeZoneEntered) {
-                window.onSafeZoneEntered();
+                window.onSafeZoneEntered(this.mode);
             }
         }
 
@@ -88,18 +74,29 @@ class ObstacleManager {
             }
         }
 
-        // Spawn static ground obstacles ahead (Generous spacing so it starts easy and clean!)
-        const spacing = 55; // 55 units between obstacle rows
+        // Spawn obstacles ahead
+        const spacing = this.mode === 'boss_space' ? 45 : 55;
         while (this.lastSpawnZ > shipPosition.z - this.spawnDistance) {
             if (!this.inSafeZone) {
-                this.spawnGroundPattern(this.lastSpawnZ);
+                if (this.mode === 'boss_space') {
+                    this.spawnSpaceMeteoritePattern(this.lastSpawnZ);
+                } else {
+                    this.spawnGroundPattern(this.lastSpawnZ);
+                }
             }
             this.lastSpawnZ -= spacing;
         }
 
-        // Remove obstacles that the ship has passed
+        // Update & animate (Meteorites tumble slowly in deep space)
         for (let i = this.obstacles.length - 1; i >= 0; i--) {
             const obs = this.obstacles[i];
+
+            if (obs.rotSpeed) {
+                obs.mesh.rotation.x += obs.rotSpeed.x;
+                obs.mesh.rotation.y += obs.rotSpeed.y;
+                obs.mesh.rotation.z += obs.rotSpeed.z;
+            }
+
             if (obs.mesh.position.z > shipPosition.z + 40) {
                 this.scene.remove(obs.mesh);
                 this.obstacles.splice(i, 1);
@@ -107,52 +104,47 @@ class ObstacleManager {
         }
     }
 
-    getRandomMaterial() {
+    // ==========================================
+    // PLANETARY OBSTACLES (Static on ground)
+    // ==========================================
+    getRandomCrystalMaterial() {
         return this.crystalMaterials[Math.floor(Math.random() * this.crystalMaterials.length)];
     }
 
     spawnGroundPattern(targetZ) {
         const rand = Math.random();
-
         if (rand < 0.40) {
-            // Pattern 1: Single crystal pyramid on left or right, leaving center completely open
             const side = Math.random() < 0.5 ? -1 : 1;
             const xPos = side * (5 + Math.random() * 8);
             this.createStaticPyramid(xPos, targetZ);
         } else if (rand < 0.70) {
-            // Pattern 2: Two crystal pyramids on far sides with wide passage in the middle
-            const gap = 16 + Math.random() * 4; // Wide 16-20 units gap
+            const gap = 16 + Math.random() * 4;
             const centerOffset = (Math.random() - 0.5) * 6;
             this.createStaticPyramid(centerOffset - gap / 2, targetZ);
             this.createStaticPyramid(centerOffset + gap / 2, targetZ);
         } else if (rand < 0.90) {
-            // Pattern 3: Tall Crystal Obelisk / Needle standing on terrain
             const xPos = (Math.random() - 0.5) * 20;
             this.createStaticObelisk(xPos, targetZ);
         } else {
-            // Pattern 4: Low crystal cluster
             const xPos = (Math.random() - 0.5) * 18;
             this.createStaticCluster(xPos, targetZ);
         }
     }
 
-    // Static Crystal Pyramid rooted firmly on the ground (y = 0)
     createStaticPyramid(x, z) {
         const group = new THREE.Group();
         group.position.set(x, 0, z);
 
         const radius = 3.0 + Math.random() * 1.5;
         const height = radius * 2.4;
-        const mat = this.getRandomMaterial();
+        const mat = this.getRandomCrystalMaterial();
 
-        // 4-sided pyramid
         const geo = new THREE.ConeGeometry(radius, height, 4);
-        geo.translate(0, height / 2, 0); // Base sits exactly at y = 0
+        geo.translate(0, height / 2, 0);
         const pyramid = new THREE.Mesh(geo, mat);
         pyramid.rotation.y = Math.PI / 4;
         group.add(pyramid);
 
-        // Stone pediment base
         const baseGeo = new THREE.CylinderGeometry(radius * 1.15, radius * 1.25, 0.6, 8);
         baseGeo.translate(0, 0.3, 0);
         const base = new THREE.Mesh(baseGeo, this.stoneBaseMat);
@@ -163,20 +155,19 @@ class ObstacleManager {
             mesh: group,
             pos: { x: x, y: height * 0.4, z: z },
             radius: radius * 0.95,
-            height: height
+            height: height,
+            type: 'ground_pyramid'
         });
     }
 
-    // Static Tall Crystal Obelisk / Tower
     createStaticObelisk(x, z) {
         const group = new THREE.Group();
         group.position.set(x, 0, z);
 
         const radius = 1.6 + Math.random() * 0.8;
         const height = 10.0 + Math.random() * 4.0;
-        const mat = this.getRandomMaterial();
+        const mat = this.getRandomCrystalMaterial();
 
-        // Hexagonal tall prism with pointed top
         const prismGeo = new THREE.CylinderGeometry(radius * 0.7, radius, height * 0.85, 6);
         prismGeo.translate(0, (height * 0.85) / 2, 0);
         const prism = new THREE.Mesh(prismGeo, mat);
@@ -192,17 +183,17 @@ class ObstacleManager {
             mesh: group,
             pos: { x: x, y: height * 0.4, z: z },
             radius: radius * 1.1,
-            height: height
+            height: height,
+            type: 'ground_obelisk'
         });
     }
 
-    // Static Crystal Cluster on the ground
     createStaticCluster(x, z) {
         const group = new THREE.Group();
         group.position.set(x, 0, z);
 
         const count = 3;
-        const mat = this.getRandomMaterial();
+        const mat = this.getRandomCrystalMaterial();
 
         for (let i = 0; i < count; i++) {
             const h = 4.0 + Math.random() * 3.0;
@@ -223,22 +214,106 @@ class ObstacleManager {
             mesh: group,
             pos: { x: x, y: 2.5, z: z },
             radius: 2.4,
-            height: 7.0
+            height: 7.0,
+            type: 'ground_cluster'
         });
     }
 
-    // Accurate collision detection: check cylinder/sphere collision with ship
+    // ==========================================
+    // BOSS PHASE: DEEP SPACE METEORITES
+    // ==========================================
+    getRandomMeteoriteMaterial() {
+        return this.meteoriteMaterials[Math.floor(Math.random() * this.meteoriteMaterials.length)];
+    }
+
+    // Creates an irregular jagged 3D asteroid geometry
+    createAsteroidGeometry(radius) {
+        const geo = new THREE.DodecahedronGeometry(radius, 1);
+        const pos = geo.attributes.position;
+        for (let i = 0; i < pos.count; i++) {
+            const vx = pos.getX(i);
+            const vy = pos.getY(i);
+            const vz = pos.getZ(i);
+
+            // Deform vertices for craggy asteroid craters
+            const noise = 1.0 + (Math.sin(vx * 3.0) * Math.cos(vy * 3.0) * 0.22);
+            pos.setXYZ(i, vx * noise, vy * noise, vz * noise);
+        }
+        geo.computeVertexNormals();
+        return geo;
+    }
+
+    spawnSpaceMeteoritePattern(targetZ) {
+        const rand = Math.random();
+
+        if (rand < 0.40) {
+            // Pattern 1: Colossal Asteroid with a wide flyby zone
+            const xPos = (Math.random() < 0.5 ? -1 : 1) * (10 + Math.random() * 6);
+            const yPos = (Math.random() - 0.5) * 8;
+            this.createMeteorite(xPos, yPos, targetZ, 4.5 + Math.random() * 2.5);
+        } else if (rand < 0.70) {
+            // Pattern 2: Asteroid Gate (two big meteorites with center passage)
+            const gap = 15 + Math.random() * 5;
+            const centerY = (Math.random() - 0.5) * 6;
+            this.createMeteorite(-gap / 2, centerY, targetZ, 3.8);
+            this.createMeteorite(gap / 2, centerY, targetZ, 3.8);
+        } else {
+            // Pattern 3: Cluster of 2-3 medium floating asteroids
+            const count = 2;
+            for (let i = 0; i < count; i++) {
+                const x = ((i - 0.5) * 14) + (Math.random() - 0.5) * 4;
+                const y = (Math.random() - 0.5) * 9;
+                this.createMeteorite(x, y, targetZ + (i * 12), 2.4 + Math.random() * 1.2);
+            }
+        }
+    }
+
+    createMeteorite(x, y, z, radius) {
+        const mat = this.getRandomMeteoriteMaterial();
+        const geo = this.createAsteroidGeometry(radius);
+        const mesh = new THREE.Mesh(geo, mat);
+        mesh.position.set(x, y, z);
+
+        this.scene.add(mesh);
+        this.obstacles.push({
+            mesh: mesh,
+            pos: { x: x, y: y, z: z },
+            radius: radius * 1.05,
+            height: radius * 2,
+            type: 'space_meteorite',
+            rotSpeed: {
+                x: (Math.random() - 0.5) * 0.015,
+                y: (Math.random() - 0.5) * 0.02,
+                z: (Math.random() - 0.5) * 0.015
+            }
+        });
+    }
+
+    // Universal Collision Check (Both Ground & Space Meteorites)
     checkCollisions(shipPos, shipRadius = 1.2) {
         for (let obs of this.obstacles) {
-            const dx = obs.pos.x - shipPos.x;
-            const dz = obs.pos.z - shipPos.z;
-            const horizontalDistSq = dx * dx + dz * dz;
+            if (obs.type === 'space_meteorite') {
+                // Full 3D Sphere Collision for Meteorites in space
+                const dx = obs.mesh.position.x - shipPos.x;
+                const dy = obs.mesh.position.y - shipPos.y;
+                const dz = obs.mesh.position.z - shipPos.z;
+                const distSq = dx * dx + dy * dy + dz * dz;
 
-            const collideRadius = obs.radius + shipRadius;
-            if (horizontalDistSq < collideRadius * collideRadius) {
-                // Check if ship is within vertical height of the obstacle
-                if (shipPos.y >= 0 && shipPos.y <= obs.height + 0.5) {
+                const hitRadius = obs.radius + shipRadius;
+                if (distSq < hitRadius * hitRadius) {
                     return obs;
+                }
+            } else {
+                // Ground Obstacle Collision (Cylinder height check)
+                const dx = obs.pos.x - shipPos.x;
+                const dz = obs.pos.z - shipPos.z;
+                const horizontalDistSq = dx * dx + dz * dz;
+
+                const collideRadius = obs.radius + shipRadius;
+                if (horizontalDistSq < collideRadius * collideRadius) {
+                    if (shipPos.y >= 0 && shipPos.y <= obs.height + 0.5) {
+                        return obs;
+                    }
                 }
             }
         }

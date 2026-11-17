@@ -1,4 +1,4 @@
-// Main Game Controller for Bruno Run - Planetary Surface & 3 Suns Edition
+// Main Game Controller for Bruno Run - Planet + Boss Deep Space Edition
 
 class Game {
     constructor() {
@@ -12,24 +12,26 @@ class Game {
         this.renderer = null;
 
         // Game State
-        this.state = 'START'; // START, PLAYING, GAMEOVER
+        this.state = 'START';
         this.score = 0;
         this.highScore = parseInt(localStorage.getItem('bruno_run_high_score') || '0', 10);
         this.totalDistance = 0;
-        this.phaseDistance = 0; // Distance inside current phase for speed ramp
+        this.phaseDistance = 0;
 
-        // Progressive Speed per Phase (Starts easy and drops on upgrade!)
-        this.baseSpeeds = { 1: 30.0, 2: 32.0, 3: 34.0 };
-        this.currentSpeed = this.baseSpeeds[1];
-        this.targetSpeed = this.baseSpeeds[1];
+        // Stages: 1: Anakin (Planet), 2: Razor Crest (Planet), 3: N-1 (Planet Night), 4: BOSS PHASE (Deep Space & Meteorites)
         this.currentStage = 1;
+        this.isBossPhase = false;
+
+        // Cruise Speeds per Stage (resets on stage transition)
+        this.baseSpeeds = { 1: 30.0, 2: 32.0, 3: 34.0, 4: 36.0 };
+        this.currentSpeed = this.baseSpeeds[1];
 
         // Boost Mechanics
         this.boostEnergy = 100;
         this.isBoosting = false;
         this.boostMultiplier = 2.2;
 
-        // Ship Position & Altitude (Flying above planetary surface at y=0)
+        // Ship Position & Altitude
         this.shipPos = { x: 0, y: 2.2, z: 0 };
         this.shipVelocity = { x: 0, y: 0 };
         this.bounds = { minX: -14, maxX: 14, minY: 1.2, maxY: 6.8 };
@@ -39,21 +41,21 @@ class Game {
         this.currentShipMesh = null;
         this.shipShadow = null;
 
-        // Planetary Environment & 3 Suns Day/Night Cycle
+        // Planetary Environment
         this.ground = null;
         this.canyonLeft = null;
         this.canyonRight = null;
+        this.groundGrid = null;
         this.sunsGroup = null;
         this.sunCenter = null;
         this.sunTwin1 = null;
         this.sunTwin2 = null;
-        this.dayTime = 0.15; // 0.0 to 1.0 (0.1: morning, 0.35: day, 0.65: sunset, 0.85: night)
-        this.daySpeed = 0.008; // Smooth 120s full cycle
+        this.dayTime = 0.15;
+        this.daySpeed = 0.008;
 
-        // Lighting & Atmosphere
-        this.dirLight = null;
-        this.ambientLight = null;
-        this.skyStars = null;
+        // Deep Space Boss Atmosphere
+        this.deepSpaceStars = null;
+        this.nebulaDust = null;
 
         // Systems
         this.obstacleManager = null;
@@ -63,12 +65,13 @@ class Game {
         this.keys = {};
         this.touch = { active: false, startX: 0, startY: 0, moveX: 0, moveY: 0 };
 
-        // Camera follow
+        // Camera follow & shake
         this.cameraOffset = new THREE.Vector3(0, 2.8, 9.2);
         this.shakeIntensity = 0;
 
         this.initThree();
         this.initPlanetaryEnvironment();
+        this.initDeepSpaceEnvironment();
         this.initSunsAndSky();
         this.initShip();
         this.initParticles();
@@ -76,7 +79,6 @@ class Game {
         this.initEvents();
         this.updateUI();
 
-        // Animation loop
         this.clock = new THREE.Clock();
         this.animate = this.animate.bind(this);
         requestAnimationFrame(this.animate);
@@ -84,11 +86,9 @@ class Game {
 
     initThree() {
         this.scene = new THREE.Scene();
-
-        // Initial Morning Atmosphere
-        const initialFogColor = new THREE.Color(0xd97d34);
-        this.scene.fog = new THREE.FogExp2(initialFogColor, 0.0038);
-        this.scene.background = initialFogColor;
+        const initialFog = new THREE.Color(0xd97d34);
+        this.scene.fog = new THREE.FogExp2(initialFog, 0.0038);
+        this.scene.background = initialFog;
 
         this.camera = new THREE.PerspectiveCamera(65, this.width / this.height, 0.1, 1400);
         this.camera.position.set(0, 4.5, 11);
@@ -100,7 +100,6 @@ class Game {
         this.renderer.toneMappingExposure = 1.1;
         this.container.appendChild(this.renderer.domElement);
 
-        // Ambient & Directional Sun Lights
         this.ambientLight = new THREE.AmbientLight(0xffeedd, 0.85);
         this.scene.add(this.ambientLight);
 
@@ -110,13 +109,12 @@ class Game {
     }
 
     initPlanetaryEnvironment() {
-        // Planetary Ground Terrain (Tatooine / Alien Desert Canyon surface at y = 0)
+        // Planetary Ground Terrain (y = 0)
         const groundGeo = new THREE.PlaneGeometry(350, 1200, 32, 64);
         groundGeo.rotateX(-Math.PI / 2);
 
-        // Ground Material with warm alien planetary hues
         this.groundMat = new THREE.MeshStandardMaterial({
-            color: 0xc47e45, // Sandstone / desert rock
+            color: 0xc47e45,
             roughness: 0.85,
             metalness: 0.15,
             flatShading: true
@@ -126,7 +124,7 @@ class Game {
         this.ground.position.set(0, 0, -400);
         this.scene.add(this.ground);
 
-        // Canyon Ridge / Mesa walls framing the sides
+        // Canyon Mesa Ridge Walls
         const createCanyonRidge = (xPos) => {
             const ridgeGeo = new THREE.BoxGeometry(30, 24, 1200);
             const ridgeMat = new THREE.MeshStandardMaterial({
@@ -144,81 +142,86 @@ class Game {
         this.scene.add(this.canyonLeft);
         this.scene.add(this.canyonRight);
 
-        // Surface Grid Lines / Dunes
+        // Ground Dunes Grid
         const gridGeo = new THREE.GridHelper(300, 60, 0xffaa00, 0x8d512a);
         gridGeo.position.set(0, 0.08, -400);
         this.groundGrid = gridGeo;
         this.scene.add(gridGeo);
     }
 
+    initDeepSpaceEnvironment() {
+        // Distant twinkling stars for Deep Space Boss Phase
+        const count = 1800;
+        const starGeo = new THREE.BufferGeometry();
+        const starPos = new Float32Array(count * 3);
+        const starColors = new Float32Array(count * 3);
+
+        const colWhite = new THREE.Color(0xffffff);
+        const colCyan = new THREE.Color(0x00e5ff);
+        const colMagenta = new THREE.Color(0xff4081);
+
+        for (let i = 0; i < count; i++) {
+            starPos[i * 3] = (Math.random() - 0.5) * 800;
+            starPos[i * 3 + 1] = (Math.random() - 0.5) * 600;
+            starPos[i * 3 + 2] = -Math.random() * 1200;
+
+            const c = Math.random() < 0.7 ? colWhite : (Math.random() < 0.5 ? colCyan : colMagenta);
+            starColors[i * 3] = c.r;
+            starColors[i * 3 + 1] = c.g;
+            starColors[i * 3 + 2] = c.b;
+        }
+
+        starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+        starGeo.setAttribute('color', new THREE.BufferAttribute(starColors, 3));
+
+        this.deepSpaceStarMat = new THREE.PointsMaterial({
+            size: 2.4,
+            vertexColors: true,
+            transparent: true,
+            opacity: 0.0 // starts invisible on planet
+        });
+
+        this.deepSpaceStars = new THREE.Points(starGeo, this.deepSpaceStarMat);
+        this.scene.add(this.deepSpaceStars);
+    }
+
     initSunsAndSky() {
-        // Celestial Group for the 3 Suns
         this.sunsGroup = new THREE.Group();
         this.scene.add(this.sunsGroup);
 
-        // 1. Center Grand Sun (Big bright golden-white sun)
+        // Center Grand Sun
         const grandSunGeo = new THREE.SphereGeometry(26, 24, 24);
         const grandSunMat = new THREE.MeshBasicMaterial({ color: 0xfffae0 });
         this.sunCenter = new THREE.Mesh(grandSunGeo, grandSunMat);
         this.sunsGroup.add(this.sunCenter);
 
-        // Outer glow corona for Grand Sun
+        // Corona
         const coronaGeo = new THREE.SphereGeometry(32, 16, 16);
-        const coronaMat = new THREE.MeshBasicMaterial({
-            color: 0xffc107,
-            transparent: true,
-            opacity: 0.45
-        });
-        const corona = new THREE.Mesh(coronaGeo, coronaMat);
-        this.sunCenter.add(corona);
+        const coronaMat = new THREE.MeshBasicMaterial({ color: 0xffc107, transparent: true, opacity: 0.45 });
+        this.sunCenter.add(new THREE.Mesh(coronaGeo, coronaMat));
 
-        // 2. Twin Sun #1 (Warm Coral/Orange Companion)
+        // Twin Sun #1
         const twin1Geo = new THREE.SphereGeometry(11, 16, 16);
         const twin1Mat = new THREE.MeshBasicMaterial({ color: 0xff5722 });
         this.sunTwin1 = new THREE.Mesh(twin1Geo, twin1Mat);
         this.sunTwin1.position.set(-42, 16, -10);
         this.sunsGroup.add(this.sunTwin1);
 
-        // 3. Twin Sun #2 (Electric Cyan/Amber Companion)
+        // Twin Sun #2
         const twin2Geo = new THREE.SphereGeometry(8, 16, 16);
         const twin2Mat = new THREE.MeshBasicMaterial({ color: 0x00e5ff });
         this.sunTwin2 = new THREE.Mesh(twin2Geo, twin2Mat);
         this.sunTwin2.position.set(38, -12, 10);
         this.sunsGroup.add(this.sunTwin2);
-
-        // Night Sky Stars (Visible when sun sets)
-        const starCount = 800;
-        const starGeo = new THREE.BufferGeometry();
-        const starPos = new Float32Array(starCount * 3);
-
-        for (let i = 0; i < starCount; i++) {
-            starPos[i * 3] = (Math.random() - 0.5) * 800;
-            starPos[i * 3 + 1] = 60 + Math.random() * 300;
-            starPos[i * 3 + 2] = -200 - Math.random() * 800;
-        }
-        starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
-        this.starMat = new THREE.PointsMaterial({
-            size: 2.2,
-            color: 0xffffff,
-            transparent: true,
-            opacity: 0.0 // starts 0 in morning
-        });
-        this.skyStars = new THREE.Points(starGeo, this.starMat);
-        this.scene.add(this.skyStars);
     }
 
     initShip() {
         this.shipGroup = new THREE.Group();
         this.scene.add(this.shipGroup);
 
-        // Dynamic Ship Shadow on the ground surface (y = 0.04)
         const shadowGeo = new THREE.CircleGeometry(1.6, 16);
         shadowGeo.rotateX(-Math.PI / 2);
-        const shadowMat = new THREE.MeshBasicMaterial({
-            color: 0x000000,
-            transparent: true,
-            opacity: 0.55
-        });
+        const shadowMat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.55 });
         this.shipShadow = new THREE.Mesh(shadowGeo, shadowMat);
         this.shipShadow.position.y = 0.04;
         this.scene.add(this.shipShadow);
@@ -239,15 +242,15 @@ class Game {
             this.currentShipMesh = ShipBuilder.createRazorCrest();
             document.getElementById('ship-name-hud').innerText = "RAZOR CREST";
         } else {
+            // Stage 3 & 4 (Boss): Mando's N-1 Starfighter
             this.currentShipMesh = ShipBuilder.createMandalorianN1();
-            document.getElementById('ship-name-hud').innerText = "N-1 STARFIGHTER (MANDO)";
+            document.getElementById('ship-name-hud').innerText = stage === 4 ? "N-1 (FASE CHEFÃO)" : "N-1 STARFIGHTER (MANDO)";
         }
 
         this.shipGroup.add(this.currentShipMesh);
     }
 
     initParticles() {
-        // Plasma Boost Exhaust
         const plasmaCount = 120;
         const plasmaGeo = new THREE.BufferGeometry();
         this.plasmaPositions = new Float32Array(plasmaCount * 3);
@@ -269,10 +272,14 @@ class Game {
     initObstacles() {
         this.obstacleManager = new ObstacleManager(this.scene);
 
-        window.onSafeZoneEntered = () => {
+        window.onSafeZoneEntered = (mode) => {
             const banner = document.getElementById('safe-zone-banner');
             banner.classList.add('visible');
-            banner.innerHTML = "⚡ PLANÍCIE LIVRE • ÁREA SEGURA ⚡<br><small>SEM OBSTÁCULOS: ACIONE O TURBO DE PLASMA!</small>";
+            if (mode === 'boss_space') {
+                banner.innerHTML = "⚡ VÁCUO CÓSMICO LIVRE • SEM METEORITOS ⚡<br><small>ACIE O TURBO DE PLASMA NO ESPAÇO PROFUNDO!</small>";
+            } else {
+                banner.innerHTML = "⚡ PLANÍCIE LIVRE • ÁREA SEGURA ⚡<br><small>SEM OBSTÁCULOS: ACIONE O TURBO DE PLASMA!</small>";
+            }
         };
 
         window.onSafeZoneExited = () => {
@@ -290,14 +297,13 @@ class Game {
             this.renderer.setSize(this.width, this.height);
         });
 
-        // Keyboard Controls
         window.addEventListener('keydown', (e) => {
             this.keys[e.key.toLowerCase()] = true;
             if (e.code === 'Space') {
                 this.setBoosting(true);
             }
             if (this.state === 'START' && (e.code === 'Space' || e.code === 'Enter')) {
-                this.startRun();
+                this.startRun(1);
             }
         });
 
@@ -308,11 +314,10 @@ class Game {
             }
         });
 
-        // Touch Steering on screen
         const touchZone = document.getElementById('game-touch-zone');
         touchZone.addEventListener('touchstart', (e) => {
             if (this.state === 'START') {
-                this.startRun();
+                this.startRun(1);
                 return;
             }
             const t = e.touches[0];
@@ -354,9 +359,17 @@ class Game {
         boostBtn.addEventListener('mousedown', () => this.setBoosting(true));
         boostBtn.addEventListener('mouseup', () => this.setBoosting(false));
 
-        // Start / Restart Buttons
-        document.getElementById('btn-start').addEventListener('click', () => this.startRun());
-        document.getElementById('btn-restart').addEventListener('click', () => this.startRun());
+        // Start from beginning
+        document.getElementById('btn-start').addEventListener('click', () => this.startRun(1));
+
+        // Direct shortcut to Boss Phase for instant play/testing!
+        const btnBoss = document.getElementById('btn-start-boss');
+        if (btnBoss) {
+            btnBoss.addEventListener('click', () => this.startRun(4));
+        }
+
+        // Restart button
+        document.getElementById('btn-restart').addEventListener('click', () => this.startRun(1));
 
         // Mute button
         const muteBtn = document.getElementById('btn-mute');
@@ -377,22 +390,28 @@ class Game {
         }
     }
 
-    startRun() {
+    startRun(startStage = 1) {
         soundCtrl.init();
         this.state = 'PLAYING';
-        this.score = 0;
+        this.currentStage = startStage;
+        this.score = startStage === 4 ? 4500 : 0;
         this.totalDistance = 0;
         this.phaseDistance = 0;
         this.shipPos = { x: 0, y: 2.2, z: 0 };
         this.shipVelocity = { x: 0, y: 0 };
-        this.currentSpeed = this.baseSpeeds[1];
-        this.targetSpeed = this.baseSpeeds[1];
+        this.currentSpeed = this.baseSpeeds[startStage];
         this.boostEnergy = 100;
         this.isBoosting = false;
-        this.dayTime = 0.15; // Start in fresh morning!
-        this.loadShipStage(1);
+        this.dayTime = 0.15;
 
         this.obstacleManager.reset();
+        this.loadShipStage(startStage);
+
+        if (startStage === 4) {
+            this.enterBossPhase();
+        } else {
+            this.exitBossPhase();
+        }
 
         document.getElementById('start-screen').style.display = 'none';
         document.getElementById('game-over-screen').style.display = 'none';
@@ -400,6 +419,49 @@ class Game {
         document.getElementById('safe-zone-banner').classList.remove('visible');
 
         this.updateUI();
+    }
+
+    enterBossPhase() {
+        this.isBossPhase = true;
+        this.obstacleManager.setMode('boss_space');
+
+        // Hide planetary ground & canyons
+        this.ground.visible = false;
+        this.canyonLeft.visible = false;
+        this.canyonRight.visible = false;
+        this.groundGrid.visible = false;
+        this.shipShadow.visible = false;
+        this.sunsGroup.visible = false;
+
+        // Transition atmosphere to Pitch Black Deep Space with glowing distant stars
+        const deepSpaceColor = new THREE.Color(0x02040a);
+        this.scene.background = deepSpaceColor;
+        this.scene.fog.color = deepSpaceColor;
+        this.scene.fog.density = 0.0018; // clearer deep space visibility
+        this.deepSpaceStarMat.opacity = 1.0;
+
+        this.ambientLight.intensity = 0.65;
+        this.dirLight.color.setHex(0x00e5ff);
+        this.dirLight.intensity = 1.1;
+
+        // Expand flight bounds in space
+        this.bounds = { minX: -16, maxX: 16, minY: -7, maxY: 7 };
+    }
+
+    exitBossPhase() {
+        this.isBossPhase = false;
+        this.obstacleManager.setMode('planet');
+
+        this.ground.visible = true;
+        this.canyonLeft.visible = true;
+        this.canyonRight.visible = true;
+        this.groundGrid.visible = true;
+        this.shipShadow.visible = true;
+        this.sunsGroup.visible = true;
+        this.deepSpaceStarMat.opacity = 0.0;
+        this.scene.fog.density = 0.0038;
+
+        this.bounds = { minX: -14, maxX: 14, minY: 1.2, maxY: 6.8 };
     }
 
     gameOver() {
@@ -425,7 +487,8 @@ class Game {
             let shipAchieved = "PODRACER (ANAKIN)";
             if (this.currentStage === 2) shipAchieved = "RAZOR CREST";
             if (this.currentStage === 3) shipAchieved = "N-1 STARFIGHTER (MANDO)";
-            document.getElementById('ship-unlocked-info').innerText = `Nave atingida: ${shipAchieved}`;
+            if (this.currentStage === 4) shipAchieved = "N-1 • FASE CHEFÃO (ESPAÇO PROFUNDO)";
+            document.getElementById('ship-unlocked-info').innerText = `Fase alcançada: ${shipAchieved}`;
 
             document.getElementById('game-over-screen').style.display = 'flex';
         }, 800);
@@ -443,18 +506,13 @@ class Game {
             pos[i * 3 + 2] = z;
             vels.push(new THREE.Vector3(
                 (Math.random() - 0.5) * 30,
-                Math.random() * 25 + 5,
+                (Math.random() - 0.5) * 30,
                 (Math.random() - 0.5) * 30
             ));
         }
 
         geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-        const mat = new THREE.PointsMaterial({
-            size: 4.0,
-            color: 0xff5722,
-            blending: THREE.AdditiveBlending
-        });
-
+        const mat = new THREE.PointsMaterial({ size: 4.0, color: 0xff5722, blending: THREE.AdditiveBlending });
         const burst = new THREE.Points(geo, mat);
         burst.vels = vels;
         this.scene.add(burst);
@@ -484,39 +542,44 @@ class Game {
         const current = Math.floor(this.score);
         let targetStage = 1;
 
-        if (current >= 2500) {
+        if (current >= 4500) {
+            targetStage = 4; // FASE CHEFÃO!
+        } else if (current >= 2500) {
             targetStage = 3;
         } else if (current >= 1000) {
             targetStage = 2;
         }
 
-        // When unlocking new ship: reset speed back to cruise speed & reset phase distance!
         if (targetStage !== this.currentStage) {
             this.loadShipStage(targetStage);
             soundCtrl.playUpgradeSound();
 
-            // SPEED DROPS BACK to baseline for the new ship phase!
+            // SPEED RESET back to cruise speed for the new phase!
             this.phaseDistance = 0;
             this.currentSpeed = this.baseSpeeds[targetStage];
-            this.targetSpeed = this.baseSpeeds[targetStage];
 
             const banner = document.getElementById('upgrade-banner');
-            const name = targetStage === 2 ? "RAZOR CREST (MANDALORIANO)" : "N-1 STARFIGHTER MODIFICADA!";
-            banner.innerHTML = `🚀 NOVA NAVE DESBLOQUEADA!<br><strong style="color:#00ffff">${name}</strong><br><small style="font-size:12px; color:#ffffff;">Velocidade reiniciada: Acelere com a nova nave!</small>`;
-            banner.classList.add('visible');
 
+            if (targetStage === 4) {
+                // Enter Boss Phase!
+                this.enterBossPhase();
+                banner.innerHTML = `⚠️ FASE CHEFÃO ATIVADA! ⚠️<br><strong style="color:#ff0055">ESPAÇO PROFUNDO & CAMPO DE METEORITOS!</strong><br><small style="font-size:12px; color:#ffffff;">Velocidade reiniciada: Desvie dos asteroides!</small>`;
+            } else {
+                const name = targetStage === 2 ? "RAZOR CREST (MANDALORIANO)" : "N-1 STARFIGHTER (MANDO & GROGU)";
+                banner.innerHTML = `🚀 NOVA NAVE DESBLOQUEADA!<br><strong style="color:#00ffff">${name}</strong><br><small style="font-size:12px; color:#ffffff;">Velocidade reiniciada: Acelere com a nova nave!</small>`;
+            }
+
+            banner.classList.add('visible');
             setTimeout(() => {
                 banner.classList.remove('visible');
-            }, 3500);
+            }, 3800);
         }
     }
 
     updateDayNightCycle(delta) {
-        // Increment day cycle smoothly (0.0 to 1.0)
-        this.dayTime = (this.dayTime + delta * this.daySpeed) % 1.0;
+        if (this.isBossPhase) return; // In Deep Space, no planetary sun cycle
 
-        // Position the 3 Suns in an arc across the sky
-        // Sun elevation angle: 0 (horizon) -> PI/2 (zenith) -> PI (sunset) -> night
+        this.dayTime = (this.dayTime + delta * this.daySpeed) % 1.0;
         const sunAngle = this.dayTime * Math.PI * 2;
         const sunX = Math.cos(sunAngle) * 350;
         const sunY = Math.sin(sunAngle) * 220;
@@ -524,7 +587,6 @@ class Game {
 
         this.sunsGroup.position.set(sunX, sunY, sunZ);
 
-        // Rotate companion twin suns slowly around the central grand sun
         const t = this.clock.getElapsedTime();
         this.sunTwin1.position.x = Math.cos(t * 0.8) * 44;
         this.sunTwin1.position.y = Math.sin(t * 0.8) * 20;
@@ -532,61 +594,44 @@ class Game {
         this.sunTwin2.position.x = Math.cos(t * 0.6 + Math.PI) * 40;
         this.sunTwin2.position.y = Math.sin(t * 0.6 + Math.PI) * 18;
 
-        // Smooth color interpolation between time phases:
-        // 0.0 - 0.25: Morning (warm peach / golden)
-        // 0.25 - 0.50: Day (bright alien blue)
-        // 0.50 - 0.75: Sunset / Twilight (deep crimson / violet)
-        // 0.75 - 1.00: Night / Dawn (dark deep cosmic indigo)
         let skyColor = new THREE.Color();
         let groundTint = new THREE.Color();
         let lightIntensity = 1.0;
-        let starOpacity = 0.0;
 
         if (this.dayTime < 0.25) {
-            // Morning
             const f = this.dayTime / 0.25;
             skyColor.setRGB(0.85, 0.49, 0.24).lerp(new THREE.Color(0.38, 0.68, 0.95), f);
             groundTint.setRGB(0.77, 0.49, 0.27).lerp(new THREE.Color(0.85, 0.60, 0.35), f);
             lightIntensity = 0.9 + f * 0.4;
-            starOpacity = (1 - f) * 0.3;
         } else if (this.dayTime < 0.50) {
-            // Day
             const f = (this.dayTime - 0.25) / 0.25;
             skyColor.setRGB(0.38, 0.68, 0.95).lerp(new THREE.Color(0.88, 0.42, 0.18), f);
             groundTint.setRGB(0.85, 0.60, 0.35).lerp(new THREE.Color(0.75, 0.38, 0.22), f);
             lightIntensity = 1.3 - f * 0.3;
-            starOpacity = 0.0;
         } else if (this.dayTime < 0.75) {
-            // Sunset / Twilight
             const f = (this.dayTime - 0.50) / 0.25;
             skyColor.setRGB(0.88, 0.42, 0.18).lerp(new THREE.Color(0.06, 0.08, 0.18), f);
             groundTint.setRGB(0.75, 0.38, 0.22).lerp(new THREE.Color(0.20, 0.16, 0.25), f);
             lightIntensity = 1.0 - f * 0.7;
-            starOpacity = f * 0.85;
         } else {
-            // Night / Madrugada
             const f = (this.dayTime - 0.75) / 0.25;
             skyColor.setRGB(0.06, 0.08, 0.18).lerp(new THREE.Color(0.85, 0.49, 0.24), f);
             groundTint.setRGB(0.20, 0.16, 0.25).lerp(new THREE.Color(0.77, 0.49, 0.27), f);
             lightIntensity = 0.3 + f * 0.6;
-            starOpacity = (1 - f) * 0.85;
         }
 
-        // Apply interpolated atmosphere
         this.scene.background = skyColor;
         this.scene.fog.color = skyColor;
         this.groundMat.color = groundTint;
         this.dirLight.intensity = lightIntensity;
-        this.starMat.opacity = starOpacity;
     }
 
     update(delta) {
         if (this.state !== 'PLAYING') return;
 
-        // Progressive Speed inside Current Phase:
-        // Starts calm at baseSpeed and gently grows with distance traveled in this phase!
+        // Progressive Speed inside Phase
         const base = this.baseSpeeds[this.currentStage];
-        const maxRamp = this.currentStage === 1 ? 20 : (this.currentStage === 2 ? 24 : 30);
+        const maxRamp = this.currentStage === 4 ? 32 : (this.currentStage === 3 ? 28 : (this.currentStage === 2 ? 24 : 20));
         const ramp = Math.min(maxRamp, this.phaseDistance * 0.012);
         let desiredSpeed = base + ramp;
 
@@ -598,13 +643,12 @@ class Game {
                 this.isBoosting = false;
             }
             desiredSpeed *= this.boostMultiplier;
-            this.score += delta * 42 * 3.0; // 3x multiplier during boost
+            this.score += delta * 45 * 3.0;
         } else {
             this.boostEnergy = Math.min(100, this.boostEnergy + delta * 15);
-            this.score += delta * 25;
+            this.score += delta * 26;
         }
 
-        // Smooth speed transition
         this.currentSpeed = THREE.MathUtils.lerp(this.currentSpeed, desiredSpeed, 0.08);
 
         const travelStep = this.currentSpeed * delta;
@@ -625,7 +669,7 @@ class Game {
             inputY = -this.touch.moveY;
         }
 
-        const moveSpeed = 22;
+        const moveSpeed = this.isBossPhase ? 26 : 22;
         this.shipVelocity.x = THREE.MathUtils.lerp(this.shipVelocity.x, inputX * moveSpeed, 0.12);
         this.shipVelocity.y = THREE.MathUtils.lerp(this.shipVelocity.y, inputY * moveSpeed, 0.12);
 
@@ -633,7 +677,7 @@ class Game {
         this.shipPos.y += this.shipVelocity.y * delta;
         this.shipPos.z -= travelStep;
 
-        // Clamp inside flight corridor and above ground (y >= 1.2)
+        // Clamp
         this.shipPos.x = Math.max(this.bounds.minX, Math.min(this.bounds.maxX, this.shipPos.x));
         this.shipPos.y = Math.max(this.bounds.minY, Math.min(this.bounds.maxY, this.shipPos.y));
 
@@ -645,21 +689,24 @@ class Game {
         this.shipGroup.rotation.z = THREE.MathUtils.lerp(this.shipGroup.rotation.z, rollTarget, 0.12);
         this.shipGroup.rotation.x = THREE.MathUtils.lerp(this.shipGroup.rotation.x, pitchTarget, 0.12);
 
-        // Update Dynamic Ground Shadow
-        this.shipShadow.position.set(this.shipPos.x, 0.05, this.shipPos.z);
-        const altitudeScale = Math.max(0.6, 1.6 - (this.shipPos.y * 0.12));
-        this.shipShadow.scale.set(altitudeScale, altitudeScale, altitudeScale);
-        this.shipShadow.material.opacity = Math.max(0.25, 0.65 - (this.shipPos.y * 0.07));
+        // Update Ground Shadow if on planet
+        if (!this.isBossPhase) {
+            this.shipShadow.position.set(this.shipPos.x, 0.05, this.shipPos.z);
+            const altitudeScale = Math.max(0.6, 1.6 - (this.shipPos.y * 0.12));
+            this.shipShadow.scale.set(altitudeScale, altitudeScale, altitudeScale);
+            this.shipShadow.material.opacity = Math.max(0.25, 0.65 - (this.shipPos.y * 0.07));
 
-        // Move Ground, Canyons & Grid with ship forward
-        this.ground.position.z = this.shipPos.z - 300;
-        this.canyonLeft.position.z = this.shipPos.z - 300;
-        this.canyonRight.position.z = this.shipPos.z - 300;
-        this.groundGrid.position.z = this.shipPos.z - 300;
-        this.skyStars.position.z = this.shipPos.z;
+            this.ground.position.z = this.shipPos.z - 300;
+            this.canyonLeft.position.z = this.shipPos.z - 300;
+            this.canyonRight.position.z = this.shipPos.z - 300;
+            this.groundGrid.position.z = this.shipPos.z - 300;
+        } else {
+            // Keep Deep Space Stars following ship forward
+            this.deepSpaceStars.position.z = this.shipPos.z;
+        }
 
-        // Camera Follow & FOV
-        const targetFOV = this.isBoosting ? 80 : 65;
+        // Camera Follow
+        const targetFOV = this.isBoosting ? 82 : 65;
         this.camera.fov = THREE.MathUtils.lerp(this.camera.fov, targetFOV, 0.08);
         this.camera.updateProjectionMatrix();
 
@@ -679,10 +726,10 @@ class Game {
 
         this.camera.lookAt(this.shipPos.x * 0.25, this.shipPos.y * 0.25 + 0.8, this.shipPos.z - 25);
 
-        // Day/Night Cycle with 3 Suns
+        // Day/Night Cycle
         this.updateDayNightCycle(delta);
 
-        // Obstacles & Collision (Static ground obstacles)
+        // Obstacles & Collision Check
         this.obstacleManager.update(this.shipPos, this.totalDistance);
 
         const hit = this.obstacleManager.checkCollisions(this.shipPos, 1.2);
@@ -691,16 +738,14 @@ class Game {
             return;
         }
 
-        // Plasma particles
+        // Particles & Audio
         this.updatePlasmaParticles();
-
-        // Audio engine hum
         soundCtrl.updateEngine(this.currentSpeed / base, this.isBoosting);
 
-        // Check ship stage unlock & speed reset
+        // Stage Check
         this.checkStageUpgrade();
 
-        // Update UI
+        // UI
         this.updateUI();
     }
 
