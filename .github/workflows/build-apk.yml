@@ -1,0 +1,73 @@
+name: Build Bruno Run Android APK
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build Android APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Build Debug APK with Gradle
+        run: ./gradlew assembleDebug --stacktrace
+
+      - name: Prepare APK Asset
+        run: |
+          mkdir -p release-output
+          cp app/build/outputs/apk/debug/app-debug.apk release-output/Bruno-Run.apk
+
+      - name: Upload APK as Workflow Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Bruno-Run-APK
+          path: release-output/Bruno-Run.apk
+
+      - name: Create GitHub Release with APK Download
+        uses: softprops/action-gh-release@v2
+        if: github.ref == 'refs/heads/main'
+        with:
+          tag_name: v1.0.0
+          name: "Bruno Run v1.0.0 - Jogo Espacial 3D"
+          body: |
+            ## 🚀 Bruno Run - Voo Espacial 3D
+
+            Baixe o jogo diretamente para o seu celular Android clicando no link abaixo:
+
+            👉 **[Download Direto do Bruno-Run.apk](https://github.com/${{ github.repository }}/releases/download/v1.0.0/Bruno-Run.apk)**
+
+            ---
+
+            ### 🛸 Naves Desbloqueáveis por Pontuação:
+            1. 🏎️ **Podracer Vermelho do Anakin Skywalker**: Nave inicial (0 a 999 pontos) com turbinas duplas e arco elétrico de energia.
+            2. 🛡️ **Razor Crest do Mandaloriano**: Desbloqueada aos 1.000 pontos. Canhoneira pesada em aço Beskar.
+            3. 🚀 **N-1 Starfighter Modificada do Mandaloriano**: Desbloqueada aos 2.500 pontos. Cúpula com o Grogu e propulsores iônicos hiper-rápidos!
+
+            ### 🎮 Mecânicas e Controles:
+            - **Desvie dos Obstáculos**: Cristais flutuantes e grandes pirâmides de cristal em 3D.
+            - **Setores Seguros**: Corredores vazios sinalizados para acionar o turbo com segurança.
+            - **Jato de Plasma (Turbo Boost)**: Aumente a velocidade por alguns segundos e multiplique a pontuação por 3x!
+            - **Dificuldade Progressiva**: A velocidade aumenta gradualmente conforme você viaja pelo espaço.
+          files: release-output/Bruno-Run.apk
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

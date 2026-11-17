@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Bruno Run</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div id="canvas-container"></div>
+    <div id="game-touch-zone"></div>
+
+    <!-- HUD -->
+    <div id="hud" style="display: none;">
+        <div class="hud-top">
+            <div class="hud-card">
+                <div class="hud-label">PONTOS</div>
+                <div id="score-value" class="hud-value">0</div>
+            </div>
+
+            <div class="hud-center-top">
+                <div id="ship-name-hud" class="ship-badge">PODRACER (ANAKIN)</div>
+            </div>
+
+            <div class="hud-top-right" style="display:flex; gap:10px; align-items:center;">
+                <div class="hud-card">
+                    <div class="hud-label">VELOCIDADE</div>
+                    <div id="speed-value" class="hud-value" style="font-size:18px;">120 KM/H</div>
+                </div>
+                <button id="btn-mute" class="btn-icon">🔊</button>
+            </div>
+        </div>
+
+        <!-- Safe Zone Alert Banner -->
+        <div id="safe-zone-banner">⚡ SETOR LIVRE • ÁREA SEGURA ⚡<br><small>ATIVE O TURBO DE PLASMA AGORA!</small></div>
+
+        <!-- Ship Upgrade Banner -->
+        <div id="upgrade-banner"></div>
+
+        <div class="hud-bottom">
+            <div class="hud-card energy-container">
+                <div class="hud-label">ENERGIA DO TURBO PLASMA</div>
+                <div class="energy-bar-bg">
+                    <div id="energy-bar-fill" class="energy-bar-fill"></div>
+                </div>
+            </div>
+
+            <div class="boost-btn-wrapper">
+                <button id="btn-boost" type="button">
+                    <span>⚡ TURBO</span>
+                    <span style="font-size:10px; opacity:0.8;">PLASMA</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Start Screen -->
+    <div id="start-screen" class="screen-overlay">
+        <h1 class="game-title">BRUNO RUN</h1>
+        <div class="game-subtitle">Exploração Espacial & Corrida 3D</div>
+
+        <div class="ships-preview-list">
+            <div class="ship-preview-item">
+                <div class="ship-preview-name">🏎️ Podracer</div>
+                <div style="font-size:11px; color:#ff5252;">Anakin Skywalker</div>
+                <div class="ship-preview-req">Inicial (0 pts)</div>
+            </div>
+            <div class="ship-preview-item">
+                <div class="ship-preview-name">🛡️ Razor Crest</div>
+                <div style="font-size:11px; color:#90a4ae;">Mandaloriano</div>
+                <div class="ship-preview-req">1.000 pts</div>
+            </div>
+            <div class="ship-preview-item">
+                <div class="ship-preview-name">🚀 N-1 Starfighter</div>
+                <div style="font-size:11px; color:#00e5ff;">Mando Atual & Grogu</div>
+                <div class="ship-preview-req">2.500 pts</div>
+            </div>
+        </div>
+
+        <button id="btn-start" class="btn-primary" type="button">INICIAR VOO</button>
+
+        <div class="controls-hint">
+            Toque e arraste em qualquer lugar da tela para pilotar.<br>
+            Aperte o botão <strong>TURBO PLASMA</strong> para acelerar!<br>
+            Desvie das pirâmides e cristais espaciais.
+        </div>
+    </div>
+
+    <!-- Game Over Screen -->
+    <div id="game-over-screen" class="screen-overlay" style="display: none;">
+        <h2 style="font-size: 38px; color: #ff1744; text-shadow: 0 0 20px rgba(255,23,68,0.7); margin-bottom: 6px;">COLISÃO DETECTADA!</h2>
+        <div id="ship-unlocked-info" style="font-size: 15px; color: #ffb300; margin-bottom: 16px;">Nave: Podracer (Anakin)</div>
+
+        <div class="stats-grid">
+            <div class="stat-box">
+                <div class="lbl">PONTUAÇÃO</div>
+                <div id="final-score" class="val">0</div>
+            </div>
+            <div class="stat-box">
+                <div class="lbl">RECORDE</div>
+                <div id="best-score-final" class="val">0</div>
+            </div>
+        </div>
+
+        <button id="btn-restart" class="btn-primary" type="button">JOGAR NOVAMENTE</button>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/three.min.js"></script>
+    <script src="js/audio.js"></script>
+    <script src="js/ships.js"></script>
+    <script src="js/obstacles.js"></script>
+    <script src="js/game.js"></script>
+</body>
+</html>
