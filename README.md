@@ -37,7 +37,15 @@
 
 ---
 
-## 🪐 Fases do Jogo (Incluindo a Nova FASE CHEFÃO)
+## 📊 Banco de Dados & Ranking Oficial no Google Sheets
+
+O jogo é integrado via **Google Apps Script** para salvar automaticamente os dados de cada partida:
+- 📊 **[Acesse a Planilha do Google Sheets com o Ranking](https://docs.google.com/spreadsheets/d/1oRm3LtkGdlRF1EkGcl2h-UGfrV0MVi4LbM5mWkWl97M/edit)**
+- 🌐 **[Página Web do Ranking Global](https://script.google.com/macros/s/AKfycbyUVrMaTqy2g70wuF_o8uB75JOvQOf1dxeJ4ovXnZjZdLV_64phNNhWho5yQ0iAsfn8/exec)**
+
+---
+
+## 🪐 Fases do Jogo (Incluindo a FASE CHEFÃO)
 
 1. **🏎️ Fase 1: Podracer Vermelho do Anakin Skywalker (0 a 999 pontos)**
    - Voo rasante sobre a superfície desértica do planeta com solo firme e sombra dinâmica.

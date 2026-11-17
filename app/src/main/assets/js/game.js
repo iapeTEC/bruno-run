@@ -1,3 +1,5 @@
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyUVrMaTqy2g70wuF_o8uB75JOvQOf1dxeJ4ovXnZjZdLV_64phNNhWho5yQ0iAsfn8/exec";
+
 // Main Game Controller for Bruno Run - Planet + Boss Deep Space Edition
 
 class Game {
@@ -5,6 +7,9 @@ class Game {
         this.container = document.getElementById('canvas-container');
         this.width = window.innerWidth;
         this.height = window.innerHeight;
+
+        // Player Name
+        this.playerName = localStorage.getItem('bruno_run_player_name') || '';
 
         // Three.js Core
         this.scene = null;
@@ -359,6 +364,34 @@ class Game {
         boostBtn.addEventListener('mousedown', () => this.setBoosting(true));
         boostBtn.addEventListener('mouseup', () => this.setBoosting(false));
 
+        // Player Name Input Setup
+        const nameInput = document.getElementById('player-name-input');
+        if (nameInput) {
+            nameInput.value = this.playerName;
+            nameInput.addEventListener('input', (e) => {
+                this.playerName = e.target.value.trim();
+                localStorage.setItem('bruno_run_player_name', this.playerName);
+            });
+        }
+
+        // Leaderboard modal listeners
+        const btnOpenLeaderboard = document.getElementById('btn-open-leaderboard');
+        if (btnOpenLeaderboard) {
+            btnOpenLeaderboard.addEventListener('click', () => this.showLeaderboard());
+        }
+
+        const btnGameOverRanking = document.getElementById('btn-gameover-ranking');
+        if (btnGameOverRanking) {
+            btnGameOverRanking.addEventListener('click', () => this.showLeaderboard());
+        }
+
+        const btnCloseLeaderboard = document.getElementById('btn-close-leaderboard');
+        if (btnCloseLeaderboard) {
+            btnCloseLeaderboard.addEventListener('click', () => {
+                document.getElementById('leaderboard-modal').style.display = 'none';
+            });
+        }
+
         // Start from beginning
         document.getElementById('btn-start').addEventListener('click', () => this.startRun(1));
 
@@ -392,6 +425,17 @@ class Game {
 
     startRun(startStage = 1) {
         soundCtrl.init();
+
+        // Read or fallback player name
+        const nameInput = document.getElementById('player-name-input');
+        if (nameInput && nameInput.value.trim()) {
+            this.playerName = nameInput.value.trim();
+        } else if (!this.playerName) {
+            this.playerName = "Piloto " + Math.floor(100 + Math.random() * 900);
+            if (nameInput) nameInput.value = this.playerName;
+        }
+        localStorage.setItem('bruno_run_player_name', this.playerName);
+
         this.state = 'PLAYING';
         this.currentStage = startStage;
         this.score = startStage === 4 ? 4500 : 0;
@@ -481,17 +525,101 @@ class Game {
         this.shipShadow.position.y = -999;
 
         setTimeout(() => {
-            document.getElementById('final-score').innerText = Math.floor(this.score).toString();
+            const finalScoreVal = Math.floor(this.score);
+            document.getElementById('final-score').innerText = finalScoreVal.toString();
             document.getElementById('best-score-final').innerText = this.highScore.toString();
 
-            let shipAchieved = "PODRACER (ANAKIN)";
-            if (this.currentStage === 2) shipAchieved = "RAZOR CREST";
-            if (this.currentStage === 3) shipAchieved = "N-1 STARFIGHTER (MANDO)";
-            if (this.currentStage === 4) shipAchieved = "N-1 • FASE CHEFÃO (ESPAÇO PROFUNDO)";
-            document.getElementById('ship-unlocked-info').innerText = `Fase alcançada: ${shipAchieved}`;
+            let shipAchieved = "Podracer (Anakin)";
+            if (this.currentStage === 2) shipAchieved = "Razor Crest";
+            if (this.currentStage === 3) shipAchieved = "N-1 Starfighter";
+            if (this.currentStage === 4) shipAchieved = "Fase Chefão (Espaço Profundo)";
+            document.getElementById('ship-unlocked-info').innerText = `Piloto: ${this.playerName} • Fase: ${shipAchieved}`;
 
             document.getElementById('game-over-screen').style.display = 'flex';
+
+            // Auto-save to Google Apps Script / Google Sheets Database
+            this.saveScoreToDatabase(finalScoreVal, shipAchieved, this.totalDistance);
         }, 800);
+    }
+
+    saveScoreToDatabase(score, stageName, distance) {
+        const dbStatus = document.getElementById('db-status');
+        if (dbStatus) {
+            dbStatus.innerText = "⏳ Gravando pontuação no Google Sheets...";
+            dbStatus.style.color = "#ffb300";
+        }
+
+        // 1. Save to local ranking cache
+        try {
+            const localList = JSON.parse(localStorage.getItem('bruno_run_ranking') || '[]');
+            localList.push({
+                player: this.playerName,
+                score: score,
+                stage: stageName,
+                date: new Date().toLocaleDateString('pt-BR')
+            });
+            localList.sort((a, b) => b.score - a.score);
+            localStorage.setItem('bruno_run_ranking', JSON.stringify(localList.slice(0, 15)));
+        } catch (e) {}
+
+        // 2. Transmit to Google Apps Script Web App
+        const url = `${APPS_SCRIPT_URL}?action=save&player=${encodeURIComponent(this.playerName)}&score=${score}&stage=${encodeURIComponent(stageName)}&distance=${Math.floor(distance)}`;
+
+        fetch(url, { mode: 'no-cors' })
+            .then(() => {
+                if (dbStatus) {
+                    dbStatus.innerText = "✅ Pontuação salva com sucesso no Google Sheets!";
+                    dbStatus.style.color = "#81c784";
+                }
+            })
+            .catch(() => {
+                if (dbStatus) {
+                    dbStatus.innerText = "✅ Pontuação salva no ranking!";
+                    dbStatus.style.color = "#81c784";
+                }
+            });
+    }
+
+    showLeaderboard() {
+        const modal = document.getElementById('leaderboard-modal');
+        const body = document.getElementById('leaderboard-body');
+        modal.style.display = 'flex';
+        body.innerHTML = '<tr><td colspan="4" style="color:#00e5ff;">Carregando ranking do Google Sheets...</td></tr>';
+
+        const renderTable = (list) => {
+            if (!list || list.length === 0) {
+                body.innerHTML = '<tr><td colspan="4" style="color:#90caf9;">Nenhum registro ainda. Jogue para pontuar!</td></tr>';
+                return;
+            }
+            let html = '';
+            list.forEach((item, idx) => {
+                html += `
+                    <tr>
+                        <td style="font-weight:900; color:#ffb300;">#${item.rank || idx + 1}</td>
+                        <td style="font-weight:700; color:#ffffff;">${item.player}</td>
+                        <td style="font-family:monospace; font-weight:900; color:#00e5ff;">${item.score}</td>
+                        <td style="color:#90caf9; font-size:11px;">${item.stage || '-'}</td>
+                    </tr>
+                `;
+            });
+            body.innerHTML = html;
+        };
+
+        // Fetch from Google Apps Script with fallback to localStorage
+        fetch(`${APPS_SCRIPT_URL}?action=leaderboard`)
+            .then(res => res.json())
+            .then(data => {
+                if (data && data.leaderboard && data.leaderboard.length > 0) {
+                    renderTable(data.leaderboard);
+                } else {
+                    const local = JSON.parse(localStorage.getItem('bruno_run_ranking') || '[]');
+                    renderTable(local);
+                }
+            })
+            .catch(() => {
+                const local = JSON.parse(localStorage.getItem('bruno_run_ranking') || '[]');
+                renderTable(local);
+            });
     }
 
     triggerExplosion(x, y, z) {

@@ -45,12 +45,12 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: github.ref == 'refs/heads/main'
         with:
-          tag_name: v1.2.0
-          name: "Bruno Run v1.2.0 - Adicionada FASE CHEFÃO no Espaço Profundo com Meteoritos!"
+          tag_name: v1.3.0
+          name: "Bruno Run v1.3.0 - Banco de Dados Google Sheets & Manobras 3D nos Asteroides"
           body: |
-            ## ☄️ Bruno Run v1.2.0 - Nova FASE CHEFÃO!
+            ## 📊 Bruno Run v1.3.0 - Atualização com Banco de Dados e Manobras 3D!
 
-            👉 **[Download Direto do Bruno-Run.apk (v1.2.0)](https://github.com/${{ github.repository }}/releases/download/v1.2.0/Bruno-Run.apk)**
+            👉 **[Download Direto do Bruno-Run.apk (v1.3.0)](https://github.com/${{ github.repository }}/releases/download/v1.3.0/Bruno-Run.apk)**
 
             <p align="center">
               <img src="https://raw.githubusercontent.com/${{ github.repository }}/main/qrcode-download.png" width="220" alt="QR Code Bruno Run" />
@@ -58,16 +58,14 @@ jobs:
 
             ---
 
-            ### 🚀 As 4 Fases do Jogo:
-            1. 🏎️ **Fase 1: Podracer de Anakin no Planeta Cânion** (0 a 999 pts) — Pirâmides de cristal estáticas com 3 sóis na manhã.
-            2. 🛡️ **Fase 2: Razor Crest do Mandaloriano** (1.000 a 2.499 pts) — Planeta ao crepúsculo. A velocidade reinicia para adaptação!
-            3. 🚀 **Fase 3: N-1 Starfighter com Grogu** (2.500 a 4.499 pts) — Planeta noturno sob as estrelas. Velocidade reiniciada!
-            4. ☄️ **Fase 4: FASE CHEFÃO - ESPAÇO PROFUNDO & METEORITOS** (4.500+ pts):
-               - A nave decola e rompe a atmosfera do planeta!
-               - O solo desaparece e você pilota no vácuo do **Espaço Profundo** com estrelas cósmicas à distância.
-               - Os obstáculos tornam-se **METEORITOS e ASTEROIDES 3D gigantes** flutuantes!
-               - A velocidade reinicia no início da fase chefão para dar fôlego ao jogador, aumentando gradativamente rumo à pontuação máxima!
-               - Botão de atalho rápido na tela inicial para testar a **Fase Chefão** direto!
+            ### 🆕 O que há de novo na v1.3.0:
+            1. 👤 **Identificação de Piloto**: Digite seu nome na tela inicial (salvo automaticamente).
+            2. 📊 **Banco de Dados Google Sheets via Apps Script**:
+               - Cada partida encerrada registra automaticamente data/hora, nome do piloto, pontuação, fase atingida e distância percorrida na planilha oficial do Google Sheets!
+               - Botão de Ranking Global no jogo e link direto para abrir a planilha.
+            3. ☄️ **Manobras 3D no Campo de Asteroides (Fase Chefão)**:
+               - Asteroides e meteoritos agora ficam amplamente espalhados em 3D: alguns gigantes no alto (para passar **POR BAIXO**), outros gigantes embaixo (para passar **POR CIMA**) e nas laterais (para passar **PELOS LADOS**)!
+               - Desafio supremo de navegação no vácuo cósmico.
           files: release-output/Bruno-Run.apk
           draft: false
           prerelease: false

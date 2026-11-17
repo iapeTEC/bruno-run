@@ -1,5 +1,5 @@
 // Obstacle Generator for Bruno Run
-// Supports both Planetary Surface (Crystals & Pyramids) and Boss Phase (Deep Space Meteorites)
+// Supports Planetary Surface (Crystals & Pyramids) and Boss Deep Space (3D Scattered Asteroids & Meteorites)
 
 class ObstacleManager {
     constructor(scene) {
@@ -7,7 +7,7 @@ class ObstacleManager {
         this.obstacles = [];
         this.mode = 'planet'; // 'planet' or 'boss_space'
         this.lastSpawnZ = -60;
-        this.spawnDistance = 380;
+        this.spawnDistance = 400;
         this.nextSafeZoneDistance = 500;
         this.inSafeZone = false;
         this.safeZoneEndDistance = 0;
@@ -23,19 +23,19 @@ class ObstacleManager {
 
         this.stoneBaseMat = new THREE.MeshStandardMaterial({ color: 0x263238, roughness: 0.9, metalness: 0.1 });
 
-        // Deep Space Meteorite Materials
+        // Deep Space Meteorite Materials (Rocky, craggy asteroid surface with crater shading)
         this.meteoriteMaterials = [
-            new THREE.MeshStandardMaterial({ color: 0x4e342e, roughness: 0.9, metalness: 0.2, flatShading: true }),
-            new THREE.MeshStandardMaterial({ color: 0x37474f, roughness: 0.85, metalness: 0.35, flatShading: true }),
-            new THREE.MeshStandardMaterial({ color: 0x212121, roughness: 0.95, metalness: 0.15, flatShading: true }),
-            new THREE.MeshStandardMaterial({ color: 0x5d4037, roughness: 0.88, metalness: 0.25, flatShading: true })
+            new THREE.MeshStandardMaterial({ color: 0x544037, roughness: 0.9, metalness: 0.15, flatShading: true }),
+            new THREE.MeshStandardMaterial({ color: 0x3e2723, roughness: 0.92, metalness: 0.2, flatShading: true }),
+            new THREE.MeshStandardMaterial({ color: 0x37474f, roughness: 0.85, metalness: 0.3, flatShading: true }),
+            new THREE.MeshStandardMaterial({ color: 0x263238, roughness: 0.95, metalness: 0.1, flatShading: true }),
+            new THREE.MeshStandardMaterial({ color: 0x616161, roughness: 0.88, metalness: 0.25, flatShading: true })
         ];
     }
 
     setMode(mode) {
         if (this.mode !== mode) {
             this.mode = mode;
-            // Clear current obstacles for clean transition
             for (let obs of this.obstacles) {
                 this.scene.remove(obs.mesh);
             }
@@ -59,7 +59,7 @@ class ObstacleManager {
         // Safe Zone Check
         if (!this.inSafeZone && currentDistance >= this.nextSafeZoneDistance) {
             this.inSafeZone = true;
-            this.safeZoneEndDistance = currentDistance + (this.mode === 'boss_space' ? 450 : 380);
+            this.safeZoneEndDistance = currentDistance + (this.mode === 'boss_space' ? 420 : 380);
             this.nextSafeZoneDistance = this.safeZoneEndDistance + (500 + Math.random() * 200);
 
             if (window.onSafeZoneEntered) {
@@ -74,8 +74,8 @@ class ObstacleManager {
             }
         }
 
-        // Spawn obstacles ahead
-        const spacing = this.mode === 'boss_space' ? 45 : 55;
+        // Spacing between obstacle rows
+        const spacing = this.mode === 'boss_space' ? 65 : 55;
         while (this.lastSpawnZ > shipPosition.z - this.spawnDistance) {
             if (!this.inSafeZone) {
                 if (this.mode === 'boss_space') {
@@ -87,7 +87,7 @@ class ObstacleManager {
             this.lastSpawnZ -= spacing;
         }
 
-        // Update & animate (Meteorites tumble slowly in deep space)
+        // Tumble meteorites in zero gravity and clean up passed obstacles
         for (let i = this.obstacles.length - 1; i >= 0; i--) {
             const obs = this.obstacles[i];
 
@@ -220,13 +220,13 @@ class ObstacleManager {
     }
 
     // ==========================================
-    // BOSS PHASE: DEEP SPACE METEORITES
+    // BOSS PHASE: 3D SCATTERED METEORITES
+    // Pass Under, Over, or to the Sides!
     // ==========================================
     getRandomMeteoriteMaterial() {
         return this.meteoriteMaterials[Math.floor(Math.random() * this.meteoriteMaterials.length)];
     }
 
-    // Creates an irregular jagged 3D asteroid geometry
     createAsteroidGeometry(radius) {
         const geo = new THREE.DodecahedronGeometry(radius, 1);
         const pos = geo.attributes.position;
@@ -235,8 +235,8 @@ class ObstacleManager {
             const vy = pos.getY(i);
             const vz = pos.getZ(i);
 
-            // Deform vertices for craggy asteroid craters
-            const noise = 1.0 + (Math.sin(vx * 3.0) * Math.cos(vy * 3.0) * 0.22);
+            // Crater deformation noise
+            const noise = 1.0 + (Math.sin(vx * 2.8) * Math.cos(vy * 2.8) * 0.24);
             pos.setXYZ(i, vx * noise, vy * noise, vz * noise);
         }
         geo.computeVertexNormals();
@@ -244,26 +244,50 @@ class ObstacleManager {
     }
 
     spawnSpaceMeteoritePattern(targetZ) {
-        const rand = Math.random();
+        const pattern = Math.random();
 
-        if (rand < 0.40) {
-            // Pattern 1: Colossal Asteroid with a wide flyby zone
-            const xPos = (Math.random() < 0.5 ? -1 : 1) * (10 + Math.random() * 6);
-            const yPos = (Math.random() - 0.5) * 8;
-            this.createMeteorite(xPos, yPos, targetZ, 4.5 + Math.random() * 2.5);
-        } else if (rand < 0.70) {
-            // Pattern 2: Asteroid Gate (two big meteorites with center passage)
-            const gap = 15 + Math.random() * 5;
-            const centerY = (Math.random() - 0.5) * 6;
-            this.createMeteorite(-gap / 2, centerY, targetZ, 3.8);
-            this.createMeteorite(gap / 2, centerY, targetZ, 3.8);
+        if (pattern < 0.28) {
+            // Pattern 1: GIANT HIGH ASTEROID -> Pass UNDER it!
+            // Asteroid hangs high at y = 4.8 to 6.2, player can dive under at y = -2 to 1!
+            const x = (Math.random() - 0.5) * 8;
+            const y = 4.8 + Math.random() * 1.6;
+            const size = 5.0 + Math.random() * 2.0; // Giant
+            this.createMeteorite(x, y, targetZ, size);
+
+            // A tiny escort meteorite off to the far side
+            if (Math.random() < 0.5) {
+                const sideX = x > 0 ? -12 : 12;
+                this.createMeteorite(sideX, -2.5, targetZ + 15, 1.8);
+            }
+        } else if (pattern < 0.56) {
+            // Pattern 2: GIANT LOW ASTEROID -> Pass OVER it!
+            // Asteroid floats low at y = -4.5 to -3.0, player can ascend and soar over at y = 2 to 5!
+            const x = (Math.random() - 0.5) * 8;
+            const y = -4.2 - Math.random() * 1.5;
+            const size = 5.2 + Math.random() * 2.0; // Giant
+            this.createMeteorite(x, y, targetZ, size);
+
+            // A tiny floating rock up high on far side
+            if (Math.random() < 0.5) {
+                const sideX = x > 0 ? -12 : 12;
+                this.createMeteorite(sideX, 3.5, targetZ + 15, 1.8);
+            }
+        } else if (pattern < 0.80) {
+            // Pattern 3: SIDE MONOLITH ASTEROIDS -> Pass to the SIDES or CENTER!
+            // One big on the left, one medium on the right, large center corridor to weave
+            const gap = 16 + Math.random() * 4;
+            const yCenter = (Math.random() - 0.5) * 4;
+            this.createMeteorite(-gap / 2, yCenter, targetZ, 4.2 + Math.random() * 1.5);
+            this.createMeteorite(gap / 2, yCenter, targetZ, 3.2 + Math.random() * 1.2);
         } else {
-            // Pattern 3: Cluster of 2-3 medium floating asteroids
-            const count = 2;
+            // Pattern 4: SCATTERED FIELD of mixed small and medium stones
+            // Player weaves between them 3D (up/down/left/right)
+            const count = 3;
             for (let i = 0; i < count; i++) {
-                const x = ((i - 0.5) * 14) + (Math.random() - 0.5) * 4;
-                const y = (Math.random() - 0.5) * 9;
-                this.createMeteorite(x, y, targetZ + (i * 12), 2.4 + Math.random() * 1.2);
+                const x = ((i - 1) * 11) + (Math.random() - 0.5) * 3;
+                const y = ((i % 2 === 0 ? 1 : -1) * 3.8) + (Math.random() - 0.5) * 2;
+                const size = 2.0 + Math.random() * 1.8;
+                this.createMeteorite(x, y, targetZ + (i * 12), size);
             }
         }
     }
@@ -282,18 +306,17 @@ class ObstacleManager {
             height: radius * 2,
             type: 'space_meteorite',
             rotSpeed: {
-                x: (Math.random() - 0.5) * 0.015,
-                y: (Math.random() - 0.5) * 0.02,
-                z: (Math.random() - 0.5) * 0.015
+                x: (Math.random() - 0.5) * 0.012,
+                y: (Math.random() - 0.5) * 0.018,
+                z: (Math.random() - 0.5) * 0.012
             }
         });
     }
 
-    // Universal Collision Check (Both Ground & Space Meteorites)
+    // Universal Collision Check (Accurate 3D Sphere & Cylinder)
     checkCollisions(shipPos, shipRadius = 1.2) {
         for (let obs of this.obstacles) {
             if (obs.type === 'space_meteorite') {
-                // Full 3D Sphere Collision for Meteorites in space
                 const dx = obs.mesh.position.x - shipPos.x;
                 const dy = obs.mesh.position.y - shipPos.y;
                 const dz = obs.mesh.position.z - shipPos.z;
@@ -304,7 +327,6 @@ class ObstacleManager {
                     return obs;
                 }
             } else {
-                // Ground Obstacle Collision (Cylinder height check)
                 const dx = obs.pos.x - shipPos.x;
                 const dz = obs.pos.z - shipPos.z;
                 const horizontalDistSq = dx * dx + dz * dz;

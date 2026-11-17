@@ -59,6 +59,12 @@
         <h1 class="game-title">BRUNO RUN</h1>
         <div class="game-subtitle">Exploração Espacial & Corrida 3D</div>
 
+        <!-- Player Name Input -->
+        <div class="player-input-card">
+            <label for="player-name-input">👤 NOME DO PILOTO</label>
+            <input type="text" id="player-name-input" placeholder="Digite seu nome..." maxlength="20" autocomplete="off" />
+        </div>
+
         <div class="ships-preview-list">
             <div class="ship-preview-item">
                 <div class="ship-preview-name">🏎️ Podracer</div>
@@ -87,17 +93,19 @@
             <button id="btn-start-boss" class="btn-primary" style="background:linear-gradient(90deg, #ff0055, #ff5722); box-shadow: 0 0 25px rgba(255,0,85,0.7);" type="button">☄️ TESTAR FASE CHEFÃO</button>
         </div>
 
+        <button id="btn-open-leaderboard" class="btn-secondary" type="button">🏆 VER RANKING GLOBAL</button>
+
         <div class="controls-hint">
-            Toque e arraste em qualquer lugar da tela para pilotar.<br>
-            Aperte o botão <strong>TURBO PLASMA</strong> para acelerar!<br>
-            Desvie das pirâmides e cristais espaciais.
+            Toque e arraste para pilotar em 3D (desvie subindo, descendo ou pros lados).<br>
+            Aperte <strong>TURBO PLASMA</strong> para acelerar!<br>
+            No Espaço Profundo, passe por cima, por baixo ou pelos lados dos meteoritos!
         </div>
     </div>
 
     <!-- Game Over Screen -->
     <div id="game-over-screen" class="screen-overlay" style="display: none;">
         <h2 style="font-size: 38px; color: #ff1744; text-shadow: 0 0 20px rgba(255,23,68,0.7); margin-bottom: 6px;">COLISÃO DETECTADA!</h2>
-        <div id="ship-unlocked-info" style="font-size: 15px; color: #ffb300; margin-bottom: 16px;">Nave: Podracer (Anakin)</div>
+        <div id="ship-unlocked-info" style="font-size: 15px; color: #ffb300; margin-bottom: 12px;">Nave: Podracer (Anakin)</div>
 
         <div class="stats-grid">
             <div class="stat-box">
@@ -110,7 +118,42 @@
             </div>
         </div>
 
-        <button id="btn-restart" class="btn-primary" type="button">JOGAR NOVAMENTE</button>
+        <!-- Database status -->
+        <div id="db-status" class="db-status">Salvando pontuação no banco de dados...</div>
+
+        <a id="btn-open-sheet" class="sheet-btn-link" href="https://docs.google.com/spreadsheets/d/1oRm3LtkGdlRF1EkGcl2h-UGfrV0MVi4LbM5mWkWl97M/edit" target="_blank">📊 Ver Banco de Dados (Google Sheets)</a>
+
+        <div style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap;">
+            <button id="btn-restart" class="btn-primary" type="button">JOGAR NOVAMENTE</button>
+            <button id="btn-gameover-ranking" class="btn-secondary" type="button">🏆 RANKING</button>
+        </div>
+    </div>
+
+    <!-- Leaderboard Modal -->
+    <div id="leaderboard-modal">
+        <div class="leaderboard-content">
+            <h2 style="color:#00e5ff; letter-spacing:2px; margin-bottom:4px;">🏆 RANKING GLOBAL</h2>
+            <p style="font-size:12px; color:#90caf9; margin-bottom:12px;">Banco de Dados Oficial Google Sheets</p>
+
+            <table class="leaderboard-table">
+                <thead>
+                    <tr>
+                        <th>Pos</th>
+                        <th>Piloto</th>
+                        <th>Pontos</th>
+                        <th>Fase</th>
+                    </tr>
+                </thead>
+                <tbody id="leaderboard-body">
+                    <tr><td colspan="4" style="color:#90caf9;">Carregando pontuações...</td></tr>
+                </tbody>
+            </table>
+
+            <div style="display:flex; gap:10px; justify-content:center;">
+                <button id="btn-close-leaderboard" class="btn-primary" style="padding:10px 28px; font-size:14px;" type="button">FECHAR</button>
+                <a class="sheet-btn-link" style="margin:0; padding:10px 16px;" href="https://docs.google.com/spreadsheets/d/1oRm3LtkGdlRF1EkGcl2h-UGfrV0MVi4LbM5mWkWl97M/edit" target="_blank">📊 Google Sheets</a>
+            </div>
+        </div>
     </div>
 
     <!-- Scripts -->
