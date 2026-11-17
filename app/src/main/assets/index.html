@@ -59,10 +59,19 @@
         <h1 class="game-title">BRUNO RUN</h1>
         <div class="game-subtitle">Exploração Espacial & Corrida 3D</div>
 
-        <!-- Player Name Input -->
+        <!-- Player Name & 4-Digit PIN Input -->
         <div class="player-input-card">
-            <label for="player-name-input">👤 NOME DO PILOTO</label>
-            <input type="text" id="player-name-input" placeholder="Digite seu nome..." maxlength="20" autocomplete="off" />
+            <div style="width:100%; display:flex; gap:10px; align-items:center;">
+                <div style="flex:1;">
+                    <label for="player-name-input">👤 PILOTO</label>
+                    <input type="text" id="player-name-input" placeholder="Seu nome..." maxlength="18" autocomplete="off" />
+                </div>
+                <div style="width:105px;">
+                    <label for="player-pin-input">🔑 PIN (4 DÍGITOS)</label>
+                    <input type="password" id="player-pin-input" placeholder="1234" maxlength="4" pattern="[0-9]*" inputmode="numeric" autocomplete="off" />
+                </div>
+            </div>
+            <div style="font-size:10px; color:#80deea; margin-top:4px;">Seu PIN protege seu recorde de ser sobrescrito por outros</div>
         </div>
 
         <div class="ships-preview-list">
@@ -96,9 +105,10 @@
         <button id="btn-open-leaderboard" class="btn-secondary" type="button">🏆 VER RANKING GLOBAL</button>
 
         <div class="controls-hint">
-            Toque e arraste para pilotar em 3D (desvie subindo, descendo ou pros lados).<br>
-            Aperte <strong>TURBO PLASMA</strong> para acelerar!<br>
-            No Espaço Profundo, passe por cima, por baixo ou pelos lados dos meteoritos!
+            <strong>🎮 Controles:</strong> Use as <strong>Setas</strong> ou <strong>W, A, S, D</strong> para pilotar em 3D.<br>
+            Aperte a <strong>Barra de Espaço</strong> ou o botão <strong>⚡ TURBO PLASMA</strong> para acelerar!<br>
+            No celular: Toque e arraste na tela para pilotar e aperte o botão Turbo.<br>
+            <i>No Espaço Profundo, passe por cima, por baixo ou pelos lados dos meteoritos!</i>
         </div>
     </div>
 

@@ -45,12 +45,14 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: github.ref == 'refs/heads/main'
         with:
-          tag_name: v1.3.1
-          name: "Bruno Run v1.3.1 - Notificações Compactas na Lateral Esquerda"
+          tag_name: v1.4.0
+          name: "Bruno Run v1.4.0 - PIN de 4 Dígitos, Proteção de Recorde & GitHub Pages"
           body: |
-            ## 🚀 Bruno Run v1.3.1 - Notificações Compactas & Visão 100% Livre!
+            ## 🚀 Bruno Run v1.4.0 - PIN de Segurança, Recordes Únicos & Versão Online!
 
-            👉 **[Download Direto do Bruno-Run.apk (v1.3.1)](https://github.com/${{ github.repository }}/releases/download/v1.3.1/Bruno-Run.apk)**
+            👉 **[Download Direto do Bruno-Run.apk (v1.4.0)](https://github.com/${{ github.repository }}/releases/download/v1.4.0/Bruno-Run.apk)**
+
+            🌐 **[Jogar Online no Navegador (GitHub Pages)](https://iapetec.github.io/bruno-run/)**
 
             <p align="center">
               <img src="https://raw.githubusercontent.com/${{ github.repository }}/main/qrcode-download.png" width="220" alt="QR Code Bruno Run" />
@@ -58,10 +60,11 @@ jobs:
 
             ---
 
-            ### 🎯 Melhorias da v1.3.1:
-            - **Notificações Compactas na Lateral Esquerda**: Alertas de "Setor Seguro / Planície Livre" e "Nova Nave / Fase Chefão" agora surgem discretamente no canto esquerdo da tela em tamanho compacto com barra de destaque neon, deixando o centro da tela 100% livre para visualização dos obstáculos e meteoritos!
-            - **Banco de Dados Google Sheets & Ranking Global Ativo**.
-            - **Manobras 3D Livres no Campo de Meteoritos da Fase Chefão**.
+            ### 🎯 Novidades da v1.4.0:
+            - **Sistema de Login com PIN de 4 Dígitos**: Crie seu piloto e defina um PIN de 4 dígitos. Apenas você com seu PIN pode atualizar sua pontuação!
+            - **Anti-Duplicação de Jogadores no Ranking**: A planilha Google Sheets agora mantém apenas um registro por piloto com o **maior recorde pessoal**.
+            - **Versão Web Online no GitHub Pages**: Jogue direto pelo navegador no PC com suporte a teclas WASD / Setas para voo 3D e Barra de Espaço para liberar o Turbo Plasma.
+            - **Notificações Compactas na Lateral Esquerda**: Alertas discretos para manter a visão de voo 100% desobstruída.
           files: release-output/Bruno-Run.apk
           draft: false
           prerelease: false

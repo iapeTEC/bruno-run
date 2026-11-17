@@ -1,4 +1,4 @@
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyUVrMaTqy2g70wuF_o8uB75JOvQOf1dxeJ4ovXnZjZdLV_64phNNhWho5yQ0iAsfn8/exec";
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx5pb4IPnrPU6YxjIRCE14qe8DOzM5YNcOB2ME2U1HG6kQpCix5mGKuADXkxbEqoGMD/exec";
 
 // Main Game Controller for Bruno Run - Planet + Boss Deep Space Edition
 
@@ -8,8 +8,9 @@ class Game {
         this.width = window.innerWidth;
         this.height = window.innerHeight;
 
-        // Player Name
+        // Player Name & PIN
         this.playerName = localStorage.getItem('bruno_run_player_name') || '';
+        this.playerPin = localStorage.getItem('bruno_run_player_pin') || '1234';
 
         // Three.js Core
         this.scene = null;
@@ -303,12 +304,19 @@ class Game {
         });
 
         window.addEventListener('keydown', (e) => {
+            // Prevent default page scrolling for game control keys
+            if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) {
+                e.preventDefault();
+            }
             this.keys[e.key.toLowerCase()] = true;
             if (e.code === 'Space') {
                 this.setBoosting(true);
             }
             if (this.state === 'START' && (e.code === 'Space' || e.code === 'Enter')) {
-                this.startRun(1);
+                // If focus is not inside text input, start game
+                if (document.activeElement.tagName !== 'INPUT') {
+                    this.startRun(1);
+                }
             }
         });
 
@@ -364,13 +372,22 @@ class Game {
         boostBtn.addEventListener('mousedown', () => this.setBoosting(true));
         boostBtn.addEventListener('mouseup', () => this.setBoosting(false));
 
-        // Player Name Input Setup
+        // Player Name & PIN Input Setup
         const nameInput = document.getElementById('player-name-input');
         if (nameInput) {
             nameInput.value = this.playerName;
             nameInput.addEventListener('input', (e) => {
                 this.playerName = e.target.value.trim();
                 localStorage.setItem('bruno_run_player_name', this.playerName);
+            });
+        }
+
+        const pinInput = document.getElementById('player-pin-input');
+        if (pinInput) {
+            pinInput.value = this.playerPin;
+            pinInput.addEventListener('input', (e) => {
+                this.playerPin = e.target.value.trim().slice(0, 4);
+                localStorage.setItem('bruno_run_player_pin', this.playerPin);
             });
         }
 
@@ -426,7 +443,7 @@ class Game {
     startRun(startStage = 1) {
         soundCtrl.init();
 
-        // Read or fallback player name
+        // Read or fallback player name and 4-digit PIN
         const nameInput = document.getElementById('player-name-input');
         if (nameInput && nameInput.value.trim()) {
             this.playerName = nameInput.value.trim();
@@ -435,6 +452,15 @@ class Game {
             if (nameInput) nameInput.value = this.playerName;
         }
         localStorage.setItem('bruno_run_player_name', this.playerName);
+
+        const pinInput = document.getElementById('player-pin-input');
+        if (pinInput && pinInput.value.trim()) {
+            this.playerPin = pinInput.value.trim().slice(0, 4);
+        } else if (!this.playerPin) {
+            this.playerPin = "1234";
+            if (pinInput) pinInput.value = this.playerPin;
+        }
+        localStorage.setItem('bruno_run_player_pin', this.playerPin);
 
         this.state = 'PLAYING';
         this.currentStage = startStage;
@@ -545,36 +571,64 @@ class Game {
     saveScoreToDatabase(score, stageName, distance) {
         const dbStatus = document.getElementById('db-status');
         if (dbStatus) {
-            dbStatus.innerText = "⏳ Gravando pontuação no Google Sheets...";
+            dbStatus.innerText = "⏳ Verificando PIN e salvando pontuação...";
             dbStatus.style.color = "#ffb300";
         }
 
-        // 1. Save to local ranking cache
+        // 1. Save or update local ranking cache (only 1 entry per player with highest score)
         try {
-            const localList = JSON.parse(localStorage.getItem('bruno_run_ranking') || '[]');
-            localList.push({
-                player: this.playerName,
-                score: score,
-                stage: stageName,
-                date: new Date().toLocaleDateString('pt-BR')
-            });
+            let localList = JSON.parse(localStorage.getItem('bruno_run_ranking') || '[]');
+            const existingIdx = localList.findIndex(item => item.player && item.player.toLowerCase() === this.playerName.toLowerCase());
+            if (existingIdx >= 0) {
+                if (score > (localList[existingIdx].score || 0)) {
+                    localList[existingIdx].score = score;
+                    localList[existingIdx].stage = stageName;
+                    localList[existingIdx].date = new Date().toLocaleDateString('pt-BR');
+                }
+            } else {
+                localList.push({
+                    player: this.playerName,
+                    score: score,
+                    stage: stageName,
+                    date: new Date().toLocaleDateString('pt-BR')
+                });
+            }
             localList.sort((a, b) => b.score - a.score);
             localStorage.setItem('bruno_run_ranking', JSON.stringify(localList.slice(0, 15)));
         } catch (e) {}
 
-        // 2. Transmit to Google Apps Script Web App
-        const url = `${APPS_SCRIPT_URL}?action=save&player=${encodeURIComponent(this.playerName)}&score=${score}&stage=${encodeURIComponent(stageName)}&distance=${Math.floor(distance)}`;
+        // 2. Transmit to Google Apps Script Web App with PIN
+        const url = `${APPS_SCRIPT_URL}?action=save&player=${encodeURIComponent(this.playerName)}&pin=${encodeURIComponent(this.playerPin)}&score=${score}&stage=${encodeURIComponent(stageName)}&distance=${Math.floor(distance)}`;
 
-        fetch(url, { mode: 'no-cors' })
-            .then(() => {
-                if (dbStatus) {
-                    dbStatus.innerText = "✅ Pontuação salva com sucesso no Google Sheets!";
+        fetch(url)
+            .then(res => {
+                const contentType = res.headers.get("content-type");
+                if (contentType && contentType.includes("application/json")) {
+                    return res.json();
+                }
+                return res.text().then(text => {
+                    try { return JSON.parse(text); } catch (e) { return null; }
+                });
+            })
+            .then(data => {
+                if (!dbStatus) return;
+                if (data && data.status === "error" && data.error_type === "INVALID_PIN") {
+                    dbStatus.innerText = `⚠️ PIN incorreto para '${this.playerName}'! Altere o PIN ou o nome.`;
+                    dbStatus.style.color = "#ff5252";
+                } else if (data && data.updated) {
+                    dbStatus.innerText = `✅ Novo recorde de ${this.playerName}: ${score} pts registrado no Google Sheets!`;
+                    dbStatus.style.color = "#81c784";
+                } else if (data && data.status === "success") {
+                    dbStatus.innerText = `ℹ️ Pontuação mantida: seu recorde é ${data.highScore || score} pts.`;
+                    dbStatus.style.color = "#90caf9";
+                } else {
+                    dbStatus.innerText = "✅ Pontuação sincronizada com sucesso!";
                     dbStatus.style.color = "#81c784";
                 }
             })
             .catch(() => {
                 if (dbStatus) {
-                    dbStatus.innerText = "✅ Pontuação salva no ranking!";
+                    dbStatus.innerText = "✅ Pontuação salva no ranking do dispositivo!";
                     dbStatus.style.color = "#81c784";
                 }
             });
