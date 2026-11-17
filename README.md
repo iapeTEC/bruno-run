@@ -15,6 +15,12 @@
 
 👉 **[Clique aqui para baixar o APK direto (Releases)](https://github.com/iapeTEC/bruno-run/releases/download/v1.0.0/Bruno-Run.apk)**
 
+<p align="center">
+  <img src="qrcode-download.png" width="240" alt="QR Code - Download Bruno-Run.apk" style="border: 4px solid #00e5ff; border-radius: 16px; padding: 8px; background: white;" />
+  <br>
+  <i>Aponte a câmera do celular para baixar o APK direto!</i>
+</p>
+
 > Caso você prefira baixar pelos artefatos da compilação do GitHub Actions, acesse a aba **Actions** no repositório.
 
 ---
