@@ -75,7 +75,9 @@ class Game {
         this.cameraOffset = new THREE.Vector3(0, 2.8, 9.2);
         this.shakeIntensity = 0;
 
-        this.initThree();
+        const threeOk = this.initThree();
+        if (!threeOk) return;
+
         this.initPlanetaryEnvironment();
         this.initDeepSpaceEnvironment();
         this.initSunsAndSky();
@@ -90,6 +92,45 @@ class Game {
         requestAnimationFrame(this.animate);
     }
 
+    createRenderer() {
+        // Try multiple configurations with graceful fallbacks
+        const configs = [
+            { antialias: true, powerPreference: 'default', failIfMajorPerformanceCaveat: false },
+            { antialias: false, powerPreference: 'default', failIfMajorPerformanceCaveat: false },
+            { antialias: false, failIfMajorPerformanceCaveat: false },
+            {}
+        ];
+
+        for (const cfg of configs) {
+            try {
+                const r = new THREE.WebGLRenderer(cfg);
+                if (r && r.getContext()) return r;
+            } catch (e) {
+                console.warn("WebGLRenderer config failed:", cfg, e);
+            }
+        }
+
+        // Fallback: manual canvas context probe (webgl2, webgl, experimental-webgl)
+        const canvas = document.createElement('canvas');
+        const contextTypes = ['webgl2', 'webgl', 'experimental-webgl'];
+        for (const type of contextTypes) {
+            try {
+                const gl = canvas.getContext(type, {
+                    failIfMajorPerformanceCaveat: false,
+                    alpha: false,
+                    depth: true
+                });
+                if (gl) {
+                    return new THREE.WebGLRenderer({ canvas: canvas, context: gl });
+                }
+            } catch (err) {
+                console.warn("Canvas context failed for:", type, err);
+            }
+        }
+
+        return null;
+    }
+
     initThree() {
         this.scene = new THREE.Scene();
         const initialFog = new THREE.Color(0xd97d34);
@@ -99,7 +140,15 @@ class Game {
         this.camera = new THREE.PerspectiveCamera(65, this.width / this.height, 0.1, 1400);
         this.camera.position.set(0, 4.5, 11);
 
-        this.renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+        this.renderer = this.createRenderer();
+        if (!this.renderer) {
+            const errOverlay = document.getElementById('webgl-error-screen');
+            if (errOverlay) errOverlay.style.display = 'flex';
+            const startScreen = document.getElementById('start-screen');
+            if (startScreen) startScreen.style.display = 'none';
+            return false;
+        }
+
         this.renderer.setSize(this.width, this.height);
         this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -112,6 +161,7 @@ class Game {
         this.dirLight = new THREE.DirectionalLight(0xfff4e6, 1.3);
         this.dirLight.position.set(30, 80, -40);
         this.scene.add(this.dirLight);
+        return true;
     }
 
     initPlanetaryEnvironment() {

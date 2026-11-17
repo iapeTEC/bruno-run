@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Bruno Run</title>
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="icon" type="image/png" href="icon.png">
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -162,6 +164,25 @@
             <div style="display:flex; gap:10px; justify-content:center;">
                 <button id="btn-close-leaderboard" class="btn-primary" style="padding:10px 28px; font-size:14px;" type="button">FECHAR</button>
                 <a class="sheet-btn-link" style="margin:0; padding:10px 16px;" href="https://docs.google.com/spreadsheets/d/1oRm3LtkGdlRF1EkGcl2h-UGfrV0MVi4LbM5mWkWl97M/edit" target="_blank">📊 Google Sheets</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- WebGL Error Screen -->
+    <div id="webgl-error-screen" class="screen-overlay" style="display: none; z-index: 9999; background: rgba(5,8,20,0.96); justify-content: center; align-items: center;">
+        <div style="max-width: 520px; width: 90%; text-align: center; padding: 28px; background: rgba(20,25,45,0.95); border: 2px solid #ff1744; border-radius: 16px; box-shadow: 0 0 35px rgba(255,23,68,0.5);">
+            <div style="font-size: 52px; margin-bottom: 8px;">⚠️</div>
+            <h2 style="font-size: 22px; color: #ff5252; margin-bottom: 12px; font-weight: 800;">Aceleração de Hardware Desativada</h2>
+            <p style="font-size: 14px; color: #cfd8dc; line-height: 1.6; margin-bottom: 16px;">
+                O navegador está com a aceleração 3D (WebGL) desligada. Para jogar no computador, ative em 2 cliques:
+            </p>
+            <div style="text-align: left; background: rgba(0,0,0,0.55); padding: 14px; border-radius: 8px; font-size: 13px; color: #00e5ff; margin-bottom: 20px; line-height: 1.7;">
+                1. Abra uma nova aba e digite: <code style="color:#ffb300; background:rgba(255,255,255,0.1); padding:2px 6px; border-radius:4px; user-select: all;">chrome://settings/system</code><br>
+                2. Ative a opção <strong>"Usar aceleração de hardware / aceleração gráfica quando disponível"</strong>.<br>
+                3. Clique no botão <strong>Reiniciar</strong> que o Chrome exibirá ao lado.
+            </div>
+            <div style="display: flex; gap: 10px; justify-content: center;">
+                <button onclick="window.location.reload()" class="btn-primary" style="margin: 0;" type="button">🔄 TENTAR NOVAMENTE</button>
             </div>
         </div>
     </div>
